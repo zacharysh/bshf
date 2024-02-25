@@ -1,1 +1,1 @@
-#Schrodinger Hartree-Fock#
+# Schrodinger Hartree-Fock
