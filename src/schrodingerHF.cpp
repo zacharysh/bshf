@@ -9,6 +9,7 @@
 #include "wavefunction/solve.hpp"
 
 #include "math/matrix.hpp"
+#include "math/math_other.hpp"
 
 int main(int argc, char **argv)
 {
@@ -29,10 +30,11 @@ int main(int argc, char **argv)
     int N_grid = 2000;
 
     std::cout << "Constructing linear grid: r0 = " << r_min << ", r_max = " << r_max << ", N_grid = " << N_grid << "... ";
-    std::vector<double> r_grid = constructGridLin(r_min, r_max, N_grid);
+    std::vector<double> r_grid = construct_grid_linear(r_min, r_max, N_grid);
     std::cout << "done.\n";
 
     std::cout << "Constructing BSpline basis, k = " << k_spline << ", n = " << n_spline << "... ";
+     
     SplineBasis basis(r_grid, k_spline, n_spline);
     std::cout << "done.\n";
     

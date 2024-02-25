@@ -5,8 +5,6 @@
 //#include <algorithm> // std::generate
 #include <iostream>
 
-#include "init.hpp"
-
 namespace Atom
 {
     auto constructPotential(int Z, std::vector<double> r_grid, int n_points) -> std::vector<double>;

@@ -49,7 +49,7 @@ class Matrix
     auto transpose() -> Matrix<T>;
 };
 
-template <typename T = int>
+template <typename T>
 class SquareMatrix : public Matrix<T>
 {
     public:

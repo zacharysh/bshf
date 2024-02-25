@@ -54,6 +54,8 @@ auto solveHydrogenlike(Wavefunction *psi, SquareMatrix<double> *Hamiltonian, Squ
 
     int Z = 3;
 
+    size_t N = Hamiltonian->get_size();
+
     std::cout << "--- Energies ---" << '\n';
     std::cout << " n | En    | predicted\n"; 
     for (int i=1; i <= 10; i++)
@@ -61,5 +63,6 @@ auto solveHydrogenlike(Wavefunction *psi, SquareMatrix<double> *Hamiltonian, Squ
         printf("%2d | %1.3f | %1.3f", i, energies[i-1], Z * Z / (2.0 * i * i));
         std::cout << "\n";
     }
+
     delete [] energies;
 }
