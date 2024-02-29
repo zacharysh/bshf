@@ -13,7 +13,7 @@ class SplineBasis
     std::vector<std::vector<double>> bspl {};
     std::vector<std::vector<double>> bspl_derivative {};
 
-    SplineBasis(std::vector<double> r_grid_, int k_spline, int n_spline);
+    SplineBasis(const std::vector<double> &r_grid_, int k_spline, int n_spline);
 };
 
 #endif

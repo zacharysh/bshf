@@ -2,11 +2,12 @@
 
 auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vector<double>
 {
+    
     std::vector<double> r(n_points);
 
     auto delta_r = (r_max - r_min) / (n_points - 1);
 
-    for(int i = 0; i < n_points; ++i) { r.at(i) = i * delta_r; }
+    for(int i = 0; i < n_points; ++i) { r.at(i) = i * delta_r + r_min; }
 
     return r;
 }
@@ -20,7 +21,7 @@ auto integrate_trap(std::vector<double> r_grid, std::vector<double> func) -> dou
     // assuming linear grid
     auto dr = r_grid.at(1) - r_grid.at(0);
 
-    for (size_t i = 0; i < r_grid.size() - 1; ++i)
+    for (std::size_t i = 0; i < r_grid.size() - 1; ++i)
     {
         result += (func.at(i+1) + func.at(i)) * dr / 2.0;
     }
@@ -28,21 +29,21 @@ auto integrate_trap(std::vector<double> r_grid, std::vector<double> func) -> dou
     return result;
 }
 
-const std::vector<double> operator*(const std::vector<double> lhs, const std::vector<double> &rhs)
+auto operator*(const std::vector<double> lhs, const std::vector<double> &rhs) -> const std::vector<double> 
 {
     auto result = lhs;
     
-    for(size_t i = 0; i < lhs.size(); ++i)
+    for(std::size_t i = 0; i < lhs.size(); ++i)
     {
         result.at(i) *= rhs.at(i);
     }
     return result;
 }
-const std::vector<double> operator+(const std::vector<double> lhs, const std::vector<double> &rhs)
+auto operator+(const std::vector<double> lhs, const std::vector<double> &rhs) -> const std::vector<double>
 {
     auto result = lhs;
     
-    for(size_t i = 0; i <= lhs.size(); ++i)
+    for(std::size_t i = 0; i < lhs.size(); ++i)
     {
         result.at(i) += rhs.at(i);
     }

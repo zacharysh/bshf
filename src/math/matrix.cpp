@@ -51,6 +51,59 @@ auto Matrix<T>::operator()(std::size_t x, std::size_t y) const -> T
 }
 
 template <typename T>
+auto Matrix<T>::operator+=(const Matrix<T> &rhs) -> Matrix<T>&
+{
+    assert(this->size_x == rhs.size_x && this->size_y == rhs.size_y);
+    for (std::size_t i = 0; i < rhs.size_x; ++i)
+    {
+        for (std::size_t j = 0; j < rhs.size_x; ++j)
+        {
+            (*this)(i, j) += rhs(i, j);
+        }
+    }
+    return *this;
+}
+
+template <typename T>
+auto Matrix<T>::operator-=(const Matrix<T> &rhs) -> Matrix<T>&
+{
+    assert(this->size_x == rhs.size_x && this->size_y == rhs.size_y);
+    for (std::size_t i = 0; i < rhs.size_x; ++i)
+    {
+        for (std::size_t j = 0; j < rhs.size_x; ++j)
+        {
+            (*this)(i, j) -= rhs(i, j);
+        }
+    }
+    return *this;
+}
+template <typename T>
+auto Matrix<T>::operator*=(const T rhs) -> Matrix<T>&
+{
+    for (std::size_t i = 0; i < this->size_x; ++i)
+    {
+        for (std::size_t j = 0; j < this->size_x; ++j)
+        {
+            (*this)(i, j) *= rhs;
+        }
+    }
+    return *this;
+}
+
+template <typename T>
+auto operator+(Matrix<T> lhs, const Matrix<T> &rhs) -> Matrix<T> { return lhs += rhs; }
+
+template <typename T>
+auto operator-(Matrix<T> lhs, const Matrix<T> &rhs) -> Matrix<T> { return lhs -= rhs; }
+
+template <typename T>
+auto operator* (Matrix<T> lhs, T rhs) -> Matrix<T> { return lhs *= rhs; };
+
+template <typename T>
+auto operator* (T lhs, Matrix<T> rhs) -> Matrix<T> { return rhs *= lhs; };
+
+
+template <typename T>
 Matrix<T>::~Matrix()
 {
     delete [] data;
@@ -74,14 +127,16 @@ auto Matrix<T>::transpose() -> Matrix<T>
 
 // uses LAPACK function DYSGV
 // solves problems of the form Av = eBv.
-auto MatrixTools::solveEigenSystem(SquareMatrix<double> *A, SquareMatrix<double> *B) -> double*
+auto MatrixTools::solveEigenSystem(SquareMatrix<double> &A, SquareMatrix<double> &B) -> std::vector<double>
 {
-    std::cout << "Calling LAPACK subroutine DYSGV...";
+    std::cout << "  > Calling LAPACK subroutine DYSGV...";
     int itype = 1;
-    char jobz = 'V';
-    char uplo = 'U';
-    int N = static_cast<int>(A->get_size());
-    double *eigenvalues = new double[N];
+    char jobz{'V'};
+    char uplo{'U'};
+
+    int N = static_cast<int>(A.get_size());
+
+    std::vector<double> eigenvalues(N);
 
     // blank array work of length lwork - memory used by LAPACK. We use the recommended value.
     int lwork = 6 * N;
@@ -90,16 +145,24 @@ auto MatrixTools::solveEigenSystem(SquareMatrix<double> *A, SquareMatrix<double>
     // error code. info = 0 if successful.
     int info = 0;
 
-    dsygv_(&itype, &jobz, &uplo, &N, A->data, &N , B->data, &N, eigenvalues, work, &lwork , &info);
+    dsygv_(&itype, &jobz, &uplo, &N, A.data, &N , B.data, &N, eigenvalues.data(), work, &lwork , &info);
 
-    std::cout << " done. (INFO = " << info << ").\n\n";
+    // Best way to do this?
+    if (info != 0)
+    {
+        std::cerr << " Error occurred (INFO = " << info << ").\n";
+    }
+    else
+    {
+        std::cout << " done.\n";
+    }
 
     delete [] work;
 
     return eigenvalues;
 }
 
-auto MatrixTools::innerProduct(std::vector<double> r_grid, std::vector<double> bra, std::vector<double> ket) -> double
+auto inline MatrixTools::innerProduct(std::vector<double> r_grid, std::vector<double> bra, std::vector<double> ket) -> double
 {
     return integrate_trap(r_grid, bra * ket);
 }

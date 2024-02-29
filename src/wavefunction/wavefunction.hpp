@@ -12,7 +12,7 @@ class Wavefunction
     int m;
 
     std::vector<double> energy {};
-    //std::vector<double*> expansion_coeffs;
+    std::vector<double> expansion_coeffs {};
 
     Wavefunction(int n_, int l_, int m_);
 };

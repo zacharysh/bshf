@@ -2,16 +2,15 @@
 
 
 // Coulombic potential
-auto Atom::constructPotential(int Z, std::vector<double> r_grid, int n_points) -> std::vector<double>
+auto Atom::constructPotential(int Z, const std::vector<double> &r_grid) -> std::vector<double>
 {
-    std::vector<double> potential {};//(n_points);
-    potential.reserve(n_points);
+    std::vector<double> potential(r_grid.size());
 
     //std::generate(potential.front(), potential.back(), 
     //    [Z, r_grid](double r) -> double {return - Z / r;} );
     
-    for (auto r : r_grid)
-        potential.push_back(- Z / r);
+    for (std::size_t i = 0; i < r_grid.size(); ++i)
+        potential.at(i) = - Z / r_grid.at(i);
 
     return potential;
 }

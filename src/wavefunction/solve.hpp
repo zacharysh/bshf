@@ -16,11 +16,11 @@
 
 
 
-auto constructHamiltonian(Atom::AtomicSystem system, Wavefunction psi, SplineBasis *basis) -> SquareMatrix<double> *;
+auto constructHamiltonian(Atom::AtomicSystem system, Wavefunction psi, SplineBasis &basis) -> SquareMatrix<double>;
 
-auto constructBMatrix(SplineBasis *basis) -> SquareMatrix<double> *;
+auto constructBMatrix(SplineBasis &basis) -> SquareMatrix<double>;
 
-auto solveHydrogenlike(Wavefunction *psi, SquareMatrix<double> *Hamiltonian, SquareMatrix<double> *b_matrix) -> void;
+auto solveHydrogenlike(Atom::AtomicSystem &atom, Wavefunction &psi, SplineBasis &basis) -> void;
 
 
 #endif
