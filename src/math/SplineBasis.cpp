@@ -18,7 +18,8 @@ SplineBasis::SplineBasis(std::vector<double> r_grid_, int k_spline, int n_spline
     // for linear grid, this is constant
     auto dr = (r_grid.at(1) - r_grid.at(0))/2.0;
 
-     // evaluate on the grid
+    // evaluate on the grid
+    #pragma omp parallel for
     for (int i = 2; i < n_spline - 1; ++i)
     {
         for (size_t j = 0; j < N; ++j)

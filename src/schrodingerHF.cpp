@@ -23,11 +23,11 @@ int main(int argc, char **argv)
     
     
     double r_min = 1.0e-5;
-    double r_max = 20.0;
+    double r_max = 40.0;
     int k_spline = 7;
     int n_spline = 60;
 
-    int N_grid = 2000;
+    int N_grid = 6000;
 
     std::cout << "Constructing linear grid: r0 = " << r_min << ", r_max = " << r_max << ", N_grid = " << N_grid << "... ";
     std::vector<double> r_grid = construct_grid_linear(r_min, r_max, N_grid);
@@ -49,15 +49,6 @@ int main(int argc, char **argv)
 
     delete Hamiltonian;
     delete BMatrix;
-
-    /*
-    std::cout << "--- Energies ---" << '\n';
-    for (size_t i=0; i < psi.energy.size(); i++)
-    {
-        std::cout << "( " << i << ", " << psi.energy.at(i) << " )\n";
-    }
-    std::cout << '\n';
-    */
 
     return EXIT_SUCCESS;
 }

@@ -7,12 +7,15 @@ SRCS := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
 INC_DIRS := $(shell find $(SRC_DIR) -type d) 
-INC_FLAGS := $(addprefix -I,$(INC_DIRS)) -I/opt/homebrew/opt/lapack/include
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+#-I/opt/homebrew/opt/lapack/include
 
-LDFLAGS=-L/opt/homebrew/opt/lapack/lib -llapack -lblas
+LDFLAGS=
+#-L/opt/homebrew/opt/lapack/lib 
 
-CC=g++
-CPPFLAGS= -O2 -fno-inline -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion
+
+CC=g++ -llapack -lblas -fopenmp
+CPPFLAGS= -O2 -fno-inline -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion 
 # -Wshadow -Wsign-conversion
 
 
