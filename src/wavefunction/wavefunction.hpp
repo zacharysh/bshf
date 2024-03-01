@@ -14,6 +14,8 @@ class Wavefunction
     std::vector<double> energy {};
     std::vector<double> expansion_coeffs {};
 
+    std::vector<double> amplitude {};
+
     Wavefunction(int n_, int l_, int m_);
 };
 

@@ -9,9 +9,10 @@ class SplineBasis
 {
     public:
     int num_spl;
+    double dr;
     std::vector<double> r_grid;
-    std::vector<std::vector<double>> bspl {};
-    std::vector<std::vector<double>> bspl_derivative {};
+    std::vector<std::vector<double>> bspl;
+    std::vector<std::vector<double>> bspl_derivative;
 
     SplineBasis(const std::vector<double> &r_grid_, int k_spline, int n_spline);
 };

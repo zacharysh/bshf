@@ -25,13 +25,13 @@ class Matrix
     public:
     const std::size_t size_x;
     const std::size_t size_y;
-    T* data; // row major order
+    std::vector<T> m_data; // row major order
 
     Matrix(int size_x_, int size_y_);
     Matrix(std::size_t size_x_, std::size_t size_y_);
     
 
-    ~Matrix();                                     // Destructor
+    //~Matrix();                                     // Destructor
     Matrix(const Matrix<T>& M);                    // Copy constructor
 
     auto operator()(std::size_t x, std::size_t y) -> T&;
@@ -42,7 +42,9 @@ class Matrix
     auto operator-=(const Matrix<T> &rhs) -> Matrix<T>&;
     auto operator*=(const T rhs)          -> Matrix<T>&;
 
-    friend auto operator<<(std::ostream& os, const Matrix<T> &matrix) -> std::ostream&
+    auto data() -> T* { return m_data.data(); }
+
+    friend auto operator<<(std::ostream &os, const Matrix<T> &matrix) -> std::ostream&
     {
         for(std::size_t i = 0; i < matrix.size_x; ++i)
         {
@@ -74,7 +76,7 @@ namespace MatrixTools
 {
     auto solveEigenSystem(SquareMatrix<double> &A, SquareMatrix<double> &B) -> std::vector<double>;
 
-    auto inline innerProduct(std::vector<double> r_grid, std::vector<double> bra, std::vector<double> ket) -> double;
+    //auto inline innerProduct(double dr, std::vector<double> bra, std::vector<double> ket) -> double;
 
     //auto computeMatrixElements(std::vector<double> r_grid, std::vector<std::vector<double>> bra, std::vector<std::vector<double>> ket)
     //-> SquareMatrix<double>*;

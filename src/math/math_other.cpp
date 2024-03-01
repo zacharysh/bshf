@@ -2,7 +2,6 @@
 
 auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vector<double>
 {
-    
     std::vector<double> r(n_points);
 
     auto delta_r = (r_max - r_min) / (n_points - 1);
@@ -12,8 +11,19 @@ auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vec
     return r;
 }
 
-// r_grid and func need to be vectors of same length
+auto trapz_linear(double dr, std::vector<double> func) -> double
+{
+    double result = 0.0;
 
+    for (std::size_t i = 0; i < func.size() - 1; ++i)
+    {
+        result += func.at(i+1) + func.at(i);
+    }
+
+    return result * dr / 2.0;
+}
+// r_grid and func need to be vectors of same length
+/*
 auto integrate_trap(std::vector<double> r_grid, std::vector<double> func) -> double
 {
     double result = 0.0;
@@ -28,6 +38,7 @@ auto integrate_trap(std::vector<double> r_grid, std::vector<double> func) -> dou
 
     return result;
 }
+*/
 
 auto operator*(const std::vector<double> lhs, const std::vector<double> &rhs) -> const std::vector<double> 
 {

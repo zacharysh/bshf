@@ -15,7 +15,7 @@ LDFLAGS=
 
 
 CC=g++ -llapack -lblas -fopenmp
-CPPFLAGS= -O2 -fno-inline -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion 
+CPPFLAGS= -O3 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion 
 # -Wshadow -Wsign-conversion
 
 

@@ -22,12 +22,12 @@ int main(int argc, char **argv)
     */
     
     
-    double r_min = 1.0e-8;
-    double r_max = 40.0;
+    double r_min = 1.0e-5;
+    double r_max = 50.0;
     int k_spline = 7;
-    int n_spline = 60;
+    int n_spline = 43;
 
-    int N_grid = 20000;
+    int N_grid = 10000;
 
     std::cout << "> Constructing linear grid: r0 = " << r_min << ", r_max = " << r_max << ", N_grid = " << N_grid << "... ";
     std::vector<double> r_grid = construct_grid_linear(r_min, r_max, N_grid);
@@ -39,27 +39,26 @@ int main(int argc, char **argv)
 
     solveHydrogenlike(Li, psi, basis);
 
+    
     std::ofstream ofs;
-    ofs.open("test.txt", std::ofstream::out | std::ofstream::app);
+    ofs.open("1s_test.txt", std::ofstream::out | std::ofstream::app);
 
-    ofs << "r, psi(r) \n";
+    ofs << "r, psi(r)\n";
 
     for(int i = 0; i < N_grid; ++i)
     {
-        auto wf = 0.0;
-        for(int j = 0; j < basis.num_spl; ++j)
-        {
-            wf += basis.bspl.at(j).at(i) * psi.expansion_coeffs.at(j);
-        } 
-        ofs << r_grid.at(i) << ", " << wf << '\n';
+        ofs << r_grid.at(i) << ", " << psi.amplitude.at(i) << '\n';
         
     }
 
     ofs.close();
+    
 
 
     /*
     SquareMatrix<double> sm(2);
+    //sm(0,1) = sm(1,0) = 1.0;
+    
     for (std::size_t i = 0; i < sm.size_x; ++i) 
     {
         for (std::size_t j = 0; j < sm.size_y; ++j) 
@@ -67,6 +66,7 @@ int main(int argc, char **argv)
             sm(i, j) = 1.0 / ((int)i + (int)j + 1);
         }
     }
+    
     SquareMatrix<double> identity(2);
     for (std::size_t i = 0; i < identity.size_x; ++i) 
     {
@@ -104,5 +104,6 @@ int main(int argc, char **argv)
     }
     std::cout << '\n';
     */
+    
     return EXIT_SUCCESS;
 }
