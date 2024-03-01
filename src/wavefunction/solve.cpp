@@ -20,9 +20,9 @@ auto constructHamiltonian(Atom::AtomicSystem system, Wavefunction psi, SplineBas
     {
         for(int j = 0; j < basis.num_spl; ++j) // <= i
         {
-            H(i, j) = trapz_linear(basis.dr, basis.bspl_derivative.at(i) * basis.bspl_derivative.at(j)) / 2.0;
-                    + trapz_linear(basis.dr, basis.bspl.at(i) * system.potential * basis.bspl.at(j))
-                    + trapz_linear(basis.dr, basis.bspl.at(i) * centrifugal * basis.bspl.at(j));
+            H(i, j) = simpson_linear(basis.dr, basis.bspl_derivative.at(i) * basis.bspl_derivative.at(j)) / 2.0;
+                    + simpson_linear(basis.dr, basis.bspl.at(i) * system.potential * basis.bspl.at(j))
+                    + simpson_linear(basis.dr, basis.bspl.at(i) * centrifugal * basis.bspl.at(j));
         }
     }
     std::cout << "done.\n";
@@ -40,7 +40,7 @@ auto constructBMatrix(SplineBasis &basis) -> SquareMatrix<double>
     {
         for(int j = 0; j < basis.num_spl; ++j)
         {
-            B(i,j) = trapz_linear(basis.dr, basis.bspl.at(i) * basis.bspl.at(j));
+            B(i,j) = simpson_linear(basis.dr, basis.bspl.at(i) * basis.bspl.at(j));
         }
     }
 
@@ -92,6 +92,6 @@ auto solveHydrogenlike(Atom::AtomicSystem &atom, Wavefunction &psi, SplineBasis 
         }        
     }
 
-    std::cout << "\n\u222Bdr|P(r)|\u00B2 = " << trapz_linear(basis.dr, psi.amplitude * psi.amplitude) << ".\n";
+    std::cout << "\n\u222Bdr|P(r)|\u00B2 = " << simpson_linear(basis.dr, psi.amplitude * psi.amplitude) << ".\n";
 
 }

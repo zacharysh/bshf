@@ -52,7 +52,8 @@ int main(int argc, char **argv)
     }
 
     ofs.close();
-    
+
+    std::cout << "trapz = " << trapz_linear(basis.dr, basis.r_grid * basis.r_grid) << ", simpson = " << simpson_linear(basis.dr, basis.r_grid * basis.r_grid);
 
 
     /*

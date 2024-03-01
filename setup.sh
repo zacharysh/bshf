@@ -1,5 +1,5 @@
 #! /bin/bash
-make clean
+#make clean
 echo "Done. Removing target executable.."
 rm -f ./schrodingerHF
 echo "Done. Building..."

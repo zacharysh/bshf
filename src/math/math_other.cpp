@@ -13,7 +13,7 @@ auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vec
 
 auto trapz_linear(double dr, std::vector<double> func) -> double
 {
-    double result = 0.0;
+    auto result {0.0};
 
     for (std::size_t i = 0; i < func.size() - 1; ++i)
     {
@@ -21,6 +21,19 @@ auto trapz_linear(double dr, std::vector<double> func) -> double
     }
 
     return result * dr / 2.0;
+}
+
+auto simpson_linear(double dr, std::vector<double> func) -> double
+{
+    auto N = func.size();
+    auto result {func.at(0) + func.at(N - 1)};
+
+    for (std::size_t i = 1; i < N - 1; ++i)
+    {
+        auto w = (i % 2 == 0) ? 2.0 : 4.0; // weight
+        result += func.at(i) * w;
+    }
+    return result * dr / 3.0;
 }
 // r_grid and func need to be vectors of same length
 /*

@@ -5,6 +5,7 @@
 
 //template <typename T>
 auto trapz_linear(double dr, std::vector<double> func) -> double;
+auto simpson_linear(double dr, std::vector<double> func) -> double;
 
 auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vector<double>;
 
