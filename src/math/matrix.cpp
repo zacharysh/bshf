@@ -4,17 +4,10 @@ template class Matrix<int>;
 template class Matrix<double>;
 
 template <typename T>
-Matrix<T>::Matrix(int size_x_, int size_y_)
-: size_x(size_x_), size_y(size_y_)
-{
-    m_data = std::vector<T>(size_x_ * size_y_); // size_t?
-}
-
-template <typename T>
 Matrix<T>::Matrix(std::size_t size_x_, std::size_t size_y_)
 : size_x(size_x_), size_y(size_y_)
 {
-    m_data = std::vector<T>((int)size_x_ * (int)size_y_); // size_t?
+    m_data = std::vector<T>(size_x_ * size_y_); // size_t?
 }
 
 template <typename T>
@@ -84,6 +77,7 @@ template <typename T>
 auto operator* (T lhs, Matrix<T> rhs) -> Matrix<T> { return rhs *= lhs; };
 
 
+/*
 template <typename T>
 auto Matrix<T>::transpose() -> Matrix<T>
 {
@@ -98,13 +92,15 @@ auto Matrix<T>::transpose() -> Matrix<T>
     }
     return result;
 }
+*/
 
 // uses LAPACK function DYSGV
 // solves problems of the form Av = eBv.
-auto MatrixTools::solveEigenSystem(SquareMatrix<double> &A, SquareMatrix<double> &B) -> std::vector<double>
+// copies A.
+auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> &B) -> std::pair<SquareMatrix<double>, std::vector<double> >
 {
     std::cout << "  > Calling LAPACK subroutine DYSGV...";
-    int itype = 1;
+    int itype{ 1 };
     char jobz{'V'};
     char uplo{'U'};
 
@@ -114,12 +110,13 @@ auto MatrixTools::solveEigenSystem(SquareMatrix<double> &A, SquareMatrix<double>
 
     // blank array work of length lwork - memory used by LAPACK. We use the recommended value of lwork.
     int lwork = 6 * N;
-    double *work = new double[lwork];
+    //double *work = new double[lwork];
+    std::vector<double> work(static_cast<std::size_t>(lwork));
 
     // error code. info = 0 if successful.
     int info = 0;
 
-    dsygv_(&itype, &jobz, &uplo, &N, A.data(), &N , B.data(), &N, eigenvalues.data(), work, &lwork , &info);
+    dsygv_(&itype, &jobz, &uplo, &N, A.data(), &N , B.data(), &N, eigenvalues.data(), work.data(), &lwork , &info);
 
     // Best way to do this?
     if (info != 0)
@@ -131,9 +128,9 @@ auto MatrixTools::solveEigenSystem(SquareMatrix<double> &A, SquareMatrix<double>
         std::cout << " done.\n";
     }
 
-    delete [] work;
+    //delete [] work;
 
-    return eigenvalues;
+    return {A, eigenvalues};
 }
 
 /*

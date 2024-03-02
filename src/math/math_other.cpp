@@ -6,14 +6,15 @@ auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vec
 
     auto delta_r = (r_max - r_min) / (n_points - 1);
 
-    for(int i = 0; i < n_points; ++i) { r.at(i) = i * delta_r + r_min; }
+    for(int i = 0; i < n_points; ++i)
+        r.at(i) = i * delta_r + r_min;
 
     return r;
 }
 
 auto trapz_linear(double dr, std::vector<double> func) -> double
 {
-    auto result {0.0};
+    double result {0.0};
 
     for (std::size_t i = 0; i < func.size() - 1; ++i)
     {
@@ -53,7 +54,9 @@ auto integrate_trap(std::vector<double> r_grid, std::vector<double> func) -> dou
 }
 */
 
-auto operator*(const std::vector<double> lhs, const std::vector<double> &rhs) -> const std::vector<double> 
+// TODO NAMESPACE FIX UP!
+
+auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double> 
 {
     auto result = lhs;
     
@@ -63,8 +66,10 @@ auto operator*(const std::vector<double> lhs, const std::vector<double> &rhs) ->
     }
     return result;
 }
-auto operator+(const std::vector<double> lhs, const std::vector<double> &rhs) -> const std::vector<double>
+
+auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>
 {
+    // assert they're the same size
     auto result = lhs;
     
     for(std::size_t i = 0; i < lhs.size(); ++i)

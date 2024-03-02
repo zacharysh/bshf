@@ -4,23 +4,19 @@
 #include <vector>
 
 #include "../math/matrix.hpp"
+#include "../math/SplineBasis.hpp"
+#include "../math/math_other.hpp"
+
 
 #include "atom.hpp"
 #include "wavefunction.hpp"
 
 
-#include "../math/SplineBasis.hpp"
+auto construct_hamiltonian_matrix(Atom::AtomicSystem system, Wavefunction psi, const SplineBasis &basis) -> SquareMatrix<double>;
 
-#include "../math/math_other.hpp"
+auto construct_spline_matrix(const SplineBasis &basis) -> SquareMatrix<double>;
 
-
-
-
-auto constructHamiltonian(Atom::AtomicSystem system, Wavefunction psi, SplineBasis &basis) -> SquareMatrix<double>;
-
-auto constructBMatrix(SplineBasis &basis) -> SquareMatrix<double>;
-
-auto solveHydrogenlike(Atom::AtomicSystem &atom, Wavefunction &psi, SplineBasis &basis) -> void;
+auto solve_hydrogen_like(Atom::AtomicSystem &atom, Wavefunction &psi, SplineBasis &basis) -> void;
 
 
 #endif

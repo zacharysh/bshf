@@ -9,7 +9,10 @@ auto simpson_linear(double dr, std::vector<double> func) -> double;
 
 auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vector<double>;
 
-const std::vector<double> operator*(const std::vector<double> lhs, const std::vector<double> &rhs);
-const std::vector<double> operator+(const std::vector<double> lhs, const std::vector<double> &rhs);
+
+//TODO FIX NAMESPACE
+// also. const? or not?
+auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>;
+auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>;
 
 #endif

@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include <cmath> // sqrt
+
 #include <fstream>
 
 #include "wavefunction/wavefunction.hpp"
@@ -21,13 +23,11 @@ int main(int argc, char **argv)
     }
     */
     
-    
-    double r_min = 1.0e-5;
-    double r_max = 50.0;
-    int k_spline = 7;
-    int n_spline = 43;
-
-    int N_grid = 10000;
+    const double r_min = 1.0e-8;
+    const double r_max = 20.0;
+    const int k_spline = 7;
+    const int n_spline = 63;
+    const int N_grid = 10000;
 
     std::cout << "> Constructing linear grid: r0 = " << r_min << ", r_max = " << r_max << ", N_grid = " << N_grid << "... ";
     std::vector<double> r_grid = construct_grid_linear(r_min, r_max, N_grid);
@@ -37,74 +37,22 @@ int main(int argc, char **argv)
     Atom::AtomicSystem Li(3, r_grid);
     Wavefunction psi(1, 0, 0); // H-like 1s orbital
 
-    solveHydrogenlike(Li, psi, basis);
+    solve_hydrogen_like(Li, psi, basis);
 
     
     std::ofstream ofs;
-    ofs.open("1s_test.txt", std::ofstream::out | std::ofstream::app);
+    ofs.open("output/Li_1s.txt", std::ofstream::out | std::ofstream::app);
 
-    ofs << "r, psi(r)\n";
+    //ofs << "r, psi(r)\n";
 
+    
     for(int i = 0; i < N_grid; ++i)
     {
-        ofs << r_grid.at(i) << ", " << psi.amplitude.at(i) << '\n';
-        
+        ofs << r_grid.at(i) << ", " << psi.P.at(i) << ", " << psi.amplitude.at(i) << '\n';
     }
 
     ofs.close();
 
-    std::cout << "trapz = " << trapz_linear(basis.dr, basis.r_grid * basis.r_grid) << ", simpson = " << simpson_linear(basis.dr, basis.r_grid * basis.r_grid);
-
-
-    /*
-    SquareMatrix<double> sm(2);
-    //sm(0,1) = sm(1,0) = 1.0;
-    
-    for (std::size_t i = 0; i < sm.size_x; ++i) 
-    {
-        for (std::size_t j = 0; j < sm.size_y; ++j) 
-        {
-            sm(i, j) = 1.0 / ((int)i + (int)j + 1);
-        }
-    }
-    
-    SquareMatrix<double> identity(2);
-    for (std::size_t i = 0; i < identity.size_x; ++i) 
-    {
-        identity(i,i) = 1.0;
-    }
-
-  // RealSymmetric: function defined in eigen.hpp
-  // MatrixAndVector is a struct defined in eigen.hpp
-  // It contians .vector (a std::vector of eigen values)
-  // and .matrix (a Matrix of eigenvectors)
-
-  // in c++17, we can do this:
-    //const auto [EVectors, EValues] =  
-    auto EValues = MatrixTools::solveEigenSystem(sm, identity);
-  // otherwise, same as this:
-  // eigen::MatrixAndVector temp = eigen::RealSymmetric(sm);
-  // const auto &EVectors = tmp.matrix;
-  // const auto &EValues  = tmp.vector;
-
-
-  // Print out the eigenvalues and eigenvectors:
-    std::cout << "Eigenvalues: ";
-    for (auto v : EValues) {
-        std::cout << v << ", ";
-    }
-    std::cout << '\n';
-    std::cout << "With corresponding eigenvectors: \n";
-    for (std::size_t i = 0; i < sm.size_x; ++i)
-    {
-        for (std::size_t j = 0; j < sm.size_y; ++j)
-        {
-        std::cout << sm(i, j) << ", ";
-        }
-        std::cout << '\n';
-    }
-    std::cout << '\n';
-    */
     
     return EXIT_SUCCESS;
 }

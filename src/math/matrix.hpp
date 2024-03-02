@@ -8,13 +8,15 @@
 
 #include <vector>
 
+#include <utility> // pair ?
+
 #include "math_other.hpp"
 
 // dsygv_ is a symbol in the LAPACK library files.
 // Documentation: http://www.netlib.org/lapack/explore-html/index.html
 extern "C"
 {
-    int dsygv_(int *ITYPE, char *JOBZ, char *UPLO,
+    void dsygv_(int *ITYPE, char *JOBZ, char *UPLO,
             int *N, double *A, int *LDA, double *B, int *LDB,
             double *W, double *WORK , int *LWORK,  int *INFO);
 }
@@ -27,17 +29,16 @@ class Matrix
     const std::size_t size_y;
     std::vector<T> m_data; // row major order
 
-    Matrix(int size_x_, int size_y_);
     Matrix(std::size_t size_x_, std::size_t size_y_);
     
 
     //~Matrix();                                     // Destructor
-    Matrix(const Matrix<T>& M);                    // Copy constructor
+    //Matrix(const Matrix<T>& M);                    // Copy constructor
 
     auto operator()(std::size_t x, std::size_t y) -> T&;
     auto operator()(std::size_t x, std::size_t y) const -> T;
 
-    auto operator= (const Matrix<T> &rhs) -> Matrix<T>&;
+    //auto operator= (const Matrix<T> &rhs) -> Matrix<T>&;
     auto operator+=(const Matrix<T> &rhs) -> Matrix<T>&;
     auto operator-=(const Matrix<T> &rhs) -> Matrix<T>&;
     auto operator*=(const T rhs)          -> Matrix<T>&;
@@ -59,14 +60,14 @@ class Matrix
         return os;
     }
 
-    auto transpose() -> Matrix<T>;
+    //auto transpose() -> Matrix<T>;
 };
 
 template <typename T>
 class SquareMatrix : public Matrix<T>
 {
     public:
-    SquareMatrix(int size_)
+    SquareMatrix(std::size_t size_)
     : Matrix<T>(size_, size_) {}
 
     auto get_size() -> std::size_t { return this->size_x; }
@@ -74,7 +75,7 @@ class SquareMatrix : public Matrix<T>
 
 namespace MatrixTools
 {
-    auto solveEigenSystem(SquareMatrix<double> &A, SquareMatrix<double> &B) -> std::vector<double>;
+    auto solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> &B) -> std::pair<SquareMatrix<double>, std::vector<double> >;
 
     //auto inline innerProduct(double dr, std::vector<double> bra, std::vector<double> ket) -> double;
 

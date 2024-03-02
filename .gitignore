@@ -3,6 +3,4 @@
 /build
 /compile_commands.json
 /schrodingerHF
-*.txt
-*.png
-*.gnu
+/output
