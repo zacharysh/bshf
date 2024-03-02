@@ -12,6 +12,8 @@
 
 #include "math_other.hpp"
 
+#include "../IO/io.hpp"
+
 // dsygv_ is a symbol in the LAPACK library files.
 // Documentation: http://www.netlib.org/lapack/explore-html/index.html
 extern "C"

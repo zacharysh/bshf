@@ -6,6 +6,8 @@
 
 #include <fstream>
 
+#include "IO/io.hpp"
+
 #include "wavefunction/wavefunction.hpp"
 #include "wavefunction/atom.hpp"
 #include "wavefunction/solve.hpp"
@@ -31,7 +33,7 @@ int main(int argc, char **argv)
 
     std::cout << "> Constructing linear grid: r0 = " << r_min << ", r_max = " << r_max << ", N_grid = " << N_grid << "... ";
     std::vector<double> r_grid = construct_grid_linear(r_min, r_max, N_grid);
-    std::cout << "done.\n";
+    std::cout << IO::done;
 
     SplineBasis basis(r_grid, k_spline, n_spline);
     Atom::AtomicSystem Li(3, r_grid);

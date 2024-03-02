@@ -99,7 +99,7 @@ auto Matrix<T>::transpose() -> Matrix<T>
 // copies A.
 auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> &B) -> std::pair<SquareMatrix<double>, std::vector<double> >
 {
-    std::cout << "  > Calling LAPACK subroutine DYSGV...";
+    std::cout << "  > Calling LAPACK subroutine DYSGV... ";
     int itype{ 1 };
     char jobz{'V'};
     char uplo{'U'};
@@ -125,7 +125,7 @@ auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double
     }
     else
     {
-        std::cout << " done.\n";
+        std::cout << IO::done;
     }
 
     //delete [] work;

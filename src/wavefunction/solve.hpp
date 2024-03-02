@@ -7,6 +7,7 @@
 #include "../math/SplineBasis.hpp"
 #include "../math/math_other.hpp"
 
+#include "../IO/io.hpp"
 
 #include "atom.hpp"
 #include "wavefunction.hpp"

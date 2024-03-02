@@ -29,7 +29,7 @@ auto construct_hamiltonian_matrix(Atom::AtomicSystem system, Wavefunction psi, c
             H(j,i) = H(i,j);
         }
     }
-    std::cout << "done.\n";
+    std::cout << IO::done;
     return H;
 }
 
@@ -51,7 +51,7 @@ auto construct_spline_matrix(const SplineBasis &basis) -> SquareMatrix<double>
         }
     }
 
-    std::cout << "done.\n";
+    std::cout << IO::done;
     return B;
 }
 
