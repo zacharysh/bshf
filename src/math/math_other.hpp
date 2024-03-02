@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "../IO/io.hpp"
+
 //template <typename T>
 auto trapz_linear(double dr, std::vector<double> func) -> double;
 auto simpson_linear(double dr, std::vector<double> func) -> double;

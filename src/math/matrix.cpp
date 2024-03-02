@@ -3,34 +3,41 @@
 template class Matrix<int>;
 template class Matrix<double>;
 
+
 template <typename T>
-Matrix<T>::Matrix(std::size_t size_x_, std::size_t size_y_)
-: size_x(size_x_), size_y(size_y_)
-{
-    m_data = std::vector<T>(size_x_ * size_y_); // size_t?
-}
+Matrix<T>::Matrix()
+: m_size_x(0), m_size_y(0), m_data(std::vector<T>()) {};
+
+
+template <typename T>
+Matrix<T>::Matrix(const std::size_t &size_x_, const std::size_t &size_y_)
+: m_size_x(size_x_), m_size_y(size_y_), m_data(std::vector<T>(size_x_ * size_y_)) {};
+
+template <typename T>
+Matrix<T>::Matrix(const std::size_t &size_x_, const std::size_t &size_y_, std::vector<T> data_)
+: m_size_x(size_x_), m_size_y(size_y_), m_data(data_) {};
 
 template <typename T>
 inline
 auto Matrix<T>::operator()(std::size_t x, std::size_t y) -> T&
 { 
-    return m_data.at(x * size_y + y);
+    return m_data.at(x * m_size_y + y);
 }
 
 template <typename T>
 inline
 auto Matrix<T>::operator()(std::size_t x, std::size_t y) const -> T
 {
-    return m_data.at(x * size_y + y);
+    return m_data.at(x * m_size_y + y);
 }
 
 template <typename T>
 auto Matrix<T>::operator+=(const Matrix<T> &rhs) -> Matrix<T>&
 {
-    assert(this->size_x == rhs.size_x && this->size_y == rhs.size_y);
-    for (std::size_t i = 0; i < rhs.size_x; ++i)
+    assert(this->m_size_x == rhs.m_size_x && this->m_size_y == rhs.m_size_y);
+    for (std::size_t i = 0; i < rhs.m_size_x; ++i)
     {
-        for (std::size_t j = 0; j < rhs.size_x; ++j)
+        for (std::size_t j = 0; j < rhs.m_size_x; ++j)
         {
             (*this)(i, j) += rhs(i, j);
         }
@@ -41,10 +48,10 @@ auto Matrix<T>::operator+=(const Matrix<T> &rhs) -> Matrix<T>&
 template <typename T>
 auto Matrix<T>::operator-=(const Matrix<T> &rhs) -> Matrix<T>&
 {
-    assert(this->size_x == rhs.size_x && this->size_y == rhs.size_y);
-    for (std::size_t i = 0; i < rhs.size_x; ++i)
+    assert(this->m_size_x == rhs.m_size_x && this->m_size_y == rhs.m_size_y);
+    for (std::size_t i = 0; i < rhs.m_size_x; ++i)
     {
-        for (std::size_t j = 0; j < rhs.size_x; ++j)
+        for (std::size_t j = 0; j < rhs.m_size_x; ++j)
         {
             (*this)(i, j) -= rhs(i, j);
         }
@@ -54,9 +61,9 @@ auto Matrix<T>::operator-=(const Matrix<T> &rhs) -> Matrix<T>&
 template <typename T>
 auto Matrix<T>::operator*=(const T rhs) -> Matrix<T>&
 {
-    for (std::size_t i = 0; i < this->size_x; ++i)
+    for (std::size_t i = 0; i < this->m_size_x; ++i)
     {
-        for (std::size_t j = 0; j < this->size_x; ++j)
+        for (std::size_t j = 0; j < this->m_size_x; ++j)
         {
             (*this)(i, j) *= rhs;
         }
@@ -76,7 +83,14 @@ auto operator* (Matrix<T> lhs, T rhs) -> Matrix<T> { return lhs *= rhs; };
 template <typename T>
 auto operator* (T lhs, Matrix<T> rhs) -> Matrix<T> { return rhs *= lhs; };
 
-
+template <typename T>
+auto Matrix<T>::get_row(std::size_t row) -> std::vector<T>
+{
+    std::vector<T> result(m_size_y);
+    for (std::size_t i = 0; i < m_size_y; ++i)
+        result.at(i) = (*this)(row, i);
+    return result;
+}
 /*
 template <typename T>
 auto Matrix<T>::transpose() -> Matrix<T>
@@ -96,10 +110,10 @@ auto Matrix<T>::transpose() -> Matrix<T>
 
 // uses LAPACK function DYSGV
 // solves problems of the form Av = eBv.
-// copies A.
-auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> &B) -> std::pair<SquareMatrix<double>, std::vector<double> >
+auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> B) -> std::pair<SquareMatrix<double>, std::vector<double> >
 {
-    std::cout << "  > Calling LAPACK subroutine DYSGV... ";
+    IO::msg::call("LAPACK subroutine DYSGV");
+    
     int itype{ 1 };
     char jobz{'V'};
     char uplo{'U'};
@@ -111,7 +125,7 @@ auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double
     // blank array work of length lwork - memory used by LAPACK. We use the recommended value of lwork.
     int lwork = 6 * N;
     //double *work = new double[lwork];
-    std::vector<double> work(static_cast<std::size_t>(lwork));
+    std::vector<double> work(lwork);
 
     // error code. info = 0 if successful.
     int info = 0;
@@ -121,11 +135,11 @@ auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double
     // Best way to do this?
     if (info != 0)
     {
-        std::cerr << " Error occurred (INFO = " << info << ").\n";
+        IO::msg::error({"INFO", info});
     }
     else
     {
-        std::cout << IO::done;
+        IO::msg::done();
     }
 
     //delete [] work;

@@ -21,10 +21,9 @@ class AtomicSystem
     AtomicSystem(int Z_, const std::vector<double> &r_grid)
     : Z(Z_) //, potential(constructPotential(Z_, r_grid, n_points))
     {
-        std::cout << "> Creating Atomic system Z = " << Z_ << ":\n";
-        std::cout << "  > Creating Coulomb potential... ";
+        
+        IO::msg::construct<int>("Atomic system", {{"Z", Z_}}, true);
         potential = construct_potential(Z_, r_grid);
-        std::cout << IO::done;
     }
 };
 

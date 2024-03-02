@@ -26,14 +26,20 @@ extern "C"
 template <typename T>
 class Matrix
 {
-    public:
-    const std::size_t size_x;
-    const std::size_t size_y;
+    private:
+    std::size_t m_size_x;
+    std::size_t m_size_y;
     std::vector<T> m_data; // row major order
 
-    Matrix(std::size_t size_x_, std::size_t size_y_);
-    
+    public:
+    Matrix();
+    Matrix(const std::size_t &size_x_, const std::size_t &size_y_);
+    Matrix(const std::size_t &size_x_, const std::size_t &size_y_, std::vector<T> data_);
 
+    Matrix(const Matrix<T> &) = default;
+    Matrix(Matrix<T> &&) = default;
+    auto operator=(const Matrix<T> &) -> Matrix<T>& = default;
+    auto operator=(Matrix<T> &&) -> Matrix<T>& = default;
     //~Matrix();                                     // Destructor
     //Matrix(const Matrix<T>& M);                    // Copy constructor
 
@@ -63,21 +69,26 @@ class Matrix
     }
 
     //auto transpose() -> Matrix<T>;
+    auto get_row(std::size_t row) -> std::vector<T>;
+
+    auto get_size_x() -> std::size_t { return m_size_x; }
+    auto get_size_y() -> std::size_t { return m_size_y; }
 };
 
 template <typename T>
 class SquareMatrix : public Matrix<T>
 {
+    
     public:
     SquareMatrix(std::size_t size_)
     : Matrix<T>(size_, size_) {}
 
-    auto get_size() -> std::size_t { return this->size_x; }
+    auto get_size() -> std::size_t { return (*this).get_size_x(); }
 };
 
 namespace MatrixTools
 {
-    auto solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> &B) -> std::pair<SquareMatrix<double>, std::vector<double> >;
+    auto solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> B) -> std::pair<SquareMatrix<double>, std::vector<double> >;
 
     //auto inline innerProduct(double dr, std::vector<double> bra, std::vector<double> ket) -> double;
 

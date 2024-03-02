@@ -4,20 +4,28 @@
 #include <vector>
 #include <iostream>
 
-class Wavefunction
+#include "../IO/io.hpp"
+#include "../math/SplineBasis.hpp"
+
+#include "../math/math_other.hpp"
+
+class Electron
 {
     public:
     int n;
     int l;
     int m;
 
-    std::vector<double> energy {};
-    std::vector<double> expansion_coeffs {};
+    double energy;
+    std::vector<double> coeffs;
+    std::size_t basis_size;
 
-    std::vector<double> P {};
-    std::vector<double> amplitude {};
+    std::vector<double> P;
+    std::vector<double> amplitude;
 
-    Wavefunction(int n_, int l_, int m_);
+    //Electron();
+
+    Electron(const int n_, const int l_, const int m_, const double energy_, const std::vector<double> coeffs_, const SplineBasis &basis);
 };
 
 #endif

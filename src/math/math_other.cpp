@@ -2,6 +2,7 @@
 
 auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vector<double>
 {
+    IO::msg::construct<double>("linear grid", {{"r_min", r_min}, {"r_max", r_max}, {"num_points", n_points}});
     std::vector<double> r(n_points);
 
     auto delta_r = (r_max - r_min) / (n_points - 1);
@@ -9,6 +10,8 @@ auto construct_grid_linear(double r_min, double r_max, int n_points) -> std::vec
     for(int i = 0; i < n_points; ++i)
         r.at(i) = i * delta_r + r_min;
 
+    IO::msg::done();
+    
     return r;
 }
 

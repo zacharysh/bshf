@@ -13,11 +13,9 @@
 #include "wavefunction.hpp"
 
 
-auto construct_hamiltonian_matrix(Atom::AtomicSystem system, Wavefunction psi, const SplineBasis &basis) -> SquareMatrix<double>;
+auto construct_hamiltonian_matrix(const Atom::AtomicSystem &system, const SplineBasis &basis, int l_number) -> SquareMatrix<double>;
 
-auto construct_spline_matrix(const SplineBasis &basis) -> SquareMatrix<double>;
-
-auto solve_hydrogen_like(Atom::AtomicSystem &atom, Wavefunction &psi, SplineBasis &basis) -> void;
+auto solve_hydrogen_like(Atom::AtomicSystem &atom, SplineBasis &basis, int l_number, int max_n_number) -> std::vector<Electron>;
 
 
 #endif

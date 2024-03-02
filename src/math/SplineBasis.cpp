@@ -4,35 +4,63 @@
 
 #include <limits> // std::epsilon()
 
-SplineBasis::SplineBasis(const std::vector<double> &r_grid_, int k_spline, int n_spline)
-: r_grid(r_grid_), num_spl(n_spline - 3)
+SplineBasis::SplineBasis(const std::vector<double> &r_grid_, int k_spline_, int n_spline_)
+:   num_spl(n_spline_ - 3),
+    k_spline(k_spline_),
+    r_grid(r_grid_),
+    dr(r_grid.at(1) - r_grid.at(0)),
+    bspl(vector_set(num_spl, std::vector<double>(r_grid.size()))),
+    bspl_derivative(vector_set(num_spl, std::vector<double>(r_grid.size()))),
+    Bmatrix(SquareMatrix<double>(num_spl))
 {
-    std::cout << "> Constructing BSpline basis, k = " << k_spline << ", n = " << num_spl << "... ";
+    IO::msg::construct<int>("B-Spline basis", {{"k", k_spline}, {"n", num_spl}}, true);
+
+    construct_spline_vectors();
+    construct_matrix();
+
+    IO::msg::done(true);
+}
+
+auto SplineBasis::construct_spline_vectors() -> void
+{
+    IO::msg::construct("basis vectors");
     
-    // construct splines
-    BSpline splines(k_spline, n_spline, r_grid.front(), r_grid.back()); // k, n, r0, r_max
+    BSpline splines(k_spline, num_spl + 3, r_grid.front(), r_grid.back());
 
-    bspl = std::vector<std::vector<double>>(num_spl, std::vector<double>(r_grid.size()));
-    bspl_derivative = std::vector<std::vector<double>>(num_spl, std::vector<double>(r_grid.size()));
-
-    // reduce number of divisions.
-    dr = r_grid.at(1) - r_grid.at(0); // is this correct?
-
-    double h = sqrt(std::numeric_limits<double>::epsilon());
-
-    // TODO - Is splines.b(i) absolutely correct???
+    auto h = sqrt(std::numeric_limits<double>::epsilon());
 
     #pragma omp parallel for
-    for (int i = 2; i < n_spline - 1; ++i)
+    for (int i = 2; i < num_spl + 2; ++i)
     {
         for (std::size_t j = 0; j < r_grid.size(); ++j)
         {
             bspl.at(i-2).at(j) = splines.b(i, r_grid.at(j));
-                        
-            bspl_derivative.at(i-2).at(j) = (splines.b(i, r_grid.at(j) + h) - splines.b(i, r_grid.at(j) - h))
-            / ((r_grid.at(j)+h) - ((r_grid.at(j)-h)));
+            
+            // Dividing by the difference rather than 2.0 * h is mathematically equivalent
+            // but reduces error due to subtraction of small numbers.
+            bspl_derivative.at(i-2).at(j) =
+            (splines.b(i, r_grid.at(j) + h) - splines.b(i, r_grid.at(j) - h)) / ((r_grid.at(j)+h) - ((r_grid.at(j)-h)));
         }
     }
 
-    std::cout << "done.\n";
+    IO::msg::done();
+}
+
+auto SplineBasis::construct_matrix() -> void
+{
+    IO::msg::construct("B-matrix");
+
+    #pragma omp parallel for
+    for(int i = 0; i < num_spl; ++i)
+    {
+        for(int j = 0; j <= i; ++j)
+        {
+            Bmatrix(i,j) = trapz_linear(dr, bspl.at(i) * bspl.at(j));
+
+            // Only need to calculate bottom half.
+            Bmatrix(j,i) = Bmatrix(i,j);
+        }
+    }
+
+    IO::msg::done();
 }

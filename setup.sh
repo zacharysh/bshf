@@ -1,10 +1,10 @@
 #! /bin/bash
 #make clean
 #echo "Done. Removing target executable.."
-rm -f output/Li_1s.txt
+rm -f output/Li.txt
 rm -f ./schrodingerHF
 echo "Done. Building..."
 bear -- make
 echo "Done."
-./schrodingerHF
+./schrodingerHF -Z 3 -l 0
 gnuplot output/plot_wavefunction.gnu
