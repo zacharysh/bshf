@@ -9,131 +9,162 @@
 #include <string> // std::string, std::stoi
 #include <sstream> // std::string, std::stoi
 
-#include "IO/io.hpp"
-
-#include "wavefunction/wavefunction.hpp"
-#include "wavefunction/atom.hpp"
-#include "wavefunction/solve.hpp"
-
 #include "math/matrix.hpp"
 #include "math/math_other.hpp"
 
-/*
-if (param == "--input-file")
-{
-    // check that theres at least enough arguments for the file name.
-    if(argc > i) 
-    {
-        std::ifstream input_file;
-        std::string if_name {argv[i+1]};
-        input_file.open(if_name);
-        // check successful reading
-        if(input_file.is_open())
-        {
-            const auto [r0, rmax, k_spline, n_spline, N_grid] = IO::read_file(input_file);
-        }
-    }
-    else
-    {
-        std::cerr << "Not enough input arguments. Needs file name.\n";
-        return EXIT_FAILURE;
-    }
+#include "math/basis/spline_basis.hpp"
+#include "math/basis/grid.hpp"
 
-    
-    auto pos = param.find("-Z");
-    
-    // probably wont work for multiple input arguments.
-    if(pos != std::string::npos)
-    {
-        Z = std::stoi(param.substr(pos + 3));
-    }
-    else
-    {
-        std::cout << "WARNING: defaulting to Z = 1.\n";
-    }
-    
-*/
+#include "IO/io.hpp"
+
+#include "physics/wavefunction.hpp"
+#include "physics/atom.hpp"
+#include "physics/solve/solve.hpp"
+#include "physics/potential.hpp"
 
 int main(int argc, char **argv)
 {
     
-    if (argc == 0)
+    if (argc == 1)
     {
-        std::cerr << "Incorrect number of args.\n Requires \'-Z\'.'\n";
+        IO::msg::error_msg("No input arguments. Aborting");
         return EXIT_FAILURE;
     }
     
-    int Z = -1;
-    std::vector<int> l{};
+    int Z = 1;
+    Potential::Type nuclear_potential = Potential::Type::Unknown;
+    Potential::Type interaction_type = Potential::Type::Unknown;
 
-    for (int i = 1; i < argc; ++i)
+    std::vector<int> l_vector {};
+
+    // std::size_t ?
+    int N_grid_size = 0;
+
+    bool fill_atom = true;
+    bool gen_spectrum = false;
+
+    for (int i = 1; i < argc; i += 1)
     {
         // Next input parameter.
         std::string param{argv[i]};
+        
 
         if (param == "-Z" && argc > i)
         {
             Z = std::stoi(argv[i+1]);
         }
-        else if ((param == "-l" || param == "-L") && argc > i)
+        if ((param == "-L" || param == "-l") && argc > i)
         {
-            std::istringstream next_arg_ss(argv[i+1]);
+            std::stringstream next_arg_ss(argv[i+1]);
 
             std::string token;
             while(getline(next_arg_ss, token, ' '))
             {
                 if(std::isdigit(token[0]))
-                    l.push_back(std::stoi(token));
+                    l_vector.push_back(std::stoi(token));
             }
+        }
+                
+        // Get rid of this?
+        else if ((param == "--nuclear-potential" || param == "-np") && argc > i)
+        {
+            std::string next_arg(argv[i+1]);
+
+            // tolower?
+            if(next_arg == "coulomb" || next_arg == "Coulomb")
+                nuclear_potential = Potential::Type::Coulomb;
+            else
+            {
+                std::cout << "Invalid nuclear potential '" << next_arg << "' given.\n";
+                return EXIT_FAILURE;
+            }
+        }
+
+        else if ((param == "--interaction-potential"|| param == "-ip") && argc > i)
+        {
+            std::string next_arg(argv[i+1]);
+
+            // tolower?
+            if(next_arg == "greens" || next_arg == "Greens")
+                interaction_type = Potential::Type::Greens;
+            else if(next_arg == "hartree-fock" || next_arg == "Hartree-Fock" || next_arg == "HF")
+                interaction_type = Potential::Type::HartreeFock;
+            else
+            {
+                std::cout << "Invalid nuclear potential '" << next_arg << "' given.\n";
+                return EXIT_FAILURE;
+            }
+        }
+
+        else if ((param == "--grid-size") && argc > i)
+        {
+            //std::istringstream next_arg_ss(argv[i+1]);
+            //next_arg_ss >> N_grid_points;
+            N_grid_size = std::stoi(argv[i+1]);
+        }
+        else if ((param == "--fill-atom"))
+        {
+            fill_atom = true;
+        }
+        else if ((param == "--generate-spectrum"))
+        {
+            gen_spectrum = true;
+            fill_atom = false;
         }
     }
 
+    if(nuclear_potential == Potential::Type::Unknown)
+    {
+        IO::msg::warning("No potential given, defaulting to Coulomb");
+        nuclear_potential = Potential::Type::Coulomb;
+    }
+    if(interaction_type == Potential::Type::Unknown)
+    {
+        IO::msg::warning("No interaction potential specified. Ignoring");
+    }
+    if(N_grid_size == 0)
+    {
+        IO::msg::warning("No grid size specified. Using default");
+        N_grid_size = 10000;
+    }
 
-    const double r0 = 1.0e-10;
-    const double rmax = 25.0;
+    const double r0 = 1.0e-8;
+    const double rmax = 40.0;
     const int k_spline = 7;
     const int n_spline = 60;
-    const int N_grid = 20000;
-    
-    std::vector<double> r_grid = construct_grid_linear(r0, rmax, N_grid);
     
 
-    SplineBasis basis(r_grid, k_spline, n_spline);
-    Atom::AtomicSystem Li(Z, r_grid);
+    SplineBasis basis {LinearGrid(r0, rmax, N_grid_size), k_spline, n_spline};
+    Atom atomic_system(Z, nuclear_potential, interaction_type, basis);
     
-    std::vector<Electron> electrons{};
-    for (auto iter : l)
+    if(interaction_type == Potential::Type::Unknown)
     {
-        auto sols = solve_hydrogen_like(Li, basis, iter, 5);
-        electrons.reserve(electrons.size() + sols.size());
-        electrons.insert(electrons.end(), sols.begin(), sols.end());
+        if(fill_atom == true)
+            solve_atom(atomic_system);
+        else if(gen_spectrum == true)
+            for (auto iter : l_vector)
+                solve_schrodinger(atomic_system, iter);
+    }
+    else
+    {
+
     }
 
-    std::vector<double> predicted(electrons.size());
-    for (int i = 1; i < (int)electrons.size(); ++i) 
-        predicted.at(i-1) = -Z * Z / (2.0 * i * i);
-
+    print_states(atomic_system.electrons);
+    
     /*
-    std::cout << "---- Energies ----" << '\n';
-    std::cout << " n | En    | predicted\n"; 
-    for (int i=1; i <= k; ++i)
-    {
-        printf("%2d | %1.4f | %1.4f\n", i, energies.at(i-1), predicted.at(i-1));
-    }
-    */
-    
     std::ofstream ofs;
     ofs.open("output/Li.txt", std::ofstream::out | std::ofstream::app);
 
     ofs << "r";
     for (int i = 0; i < (int)electrons.size(); ++i)
     {
-        ofs << ", " << i + 1;
+        ofs << ", " << electrons.at(i).state;
     }
     ofs << "\n";
-    for(int i = 0; i < N_grid; ++i)
+    for(int i = 0; i < N_grid_size; ++i)
     {
-        ofs << r_grid.at(i);
+        ofs << basis.r_grid.at(i);
         for(int j = 0; j < (int)electrons.size(); ++j)
         {
             ofs << ", " << electrons.at(j).P.at(i);
@@ -141,7 +172,7 @@ int main(int argc, char **argv)
         ofs << "\n";
     }
     ofs.close();
+    */
 
-    
     return EXIT_SUCCESS;
 }

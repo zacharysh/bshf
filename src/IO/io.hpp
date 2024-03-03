@@ -2,15 +2,13 @@
 #define IO_HPP_
 
 #include <string> // std::string
-
 #include <iostream> // std::cout
-
 #include <fstream> // std::fstream
+#include <vector> // std::vector
 
 namespace IO
 {
-
-    //auto read_file(std::ifstream &input_file) -> std::tuple<double, double, int, int, int>;
+    //auto parse_arg_pair(std::initializer_list<std::string> key, std::string arg1, std::string arg2);
 
 namespace msg
 {
@@ -22,7 +20,6 @@ namespace msg
     inline int depth = 0;
 
     //is this the best way to do this?
-
 
     template <typename... T>
     void print_values(std::initializer_list<std::pair<std::string, T...> > params);
@@ -37,12 +34,15 @@ namespace msg
 
     auto construct(std::string msg, bool down_layer = false) -> void;
     auto call(std::string msg, bool down_layer = false) -> void;
+    auto error_msg(std::string msg) -> void;
     void error(std::pair<std::string, int> params, bool down_layer = false);
+    void warning(std::string msg);
 
     template <typename... T>
     void construct(std::string msg, std::initializer_list<std::pair<std::string, T...> > params, bool down_layer = false);
 
 };
+
 }; // namespace IO
 
 #endif

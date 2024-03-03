@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CALCULATE_YK_HPP_
+#define CALCULATE_YK_HPP_
+
 #include <cassert>
 #include <cmath>
 #include <vector>
@@ -52,3 +54,5 @@ inline std::vector<double> ykab(int k, const std::vector<double> &Pa,
 }
 
 } // namespace YK
+
+#endif

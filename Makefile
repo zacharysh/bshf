@@ -10,7 +10,7 @@ INC_DIRS := $(shell find $(SRC_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 #-I/opt/homebrew/opt/lapack/include
 
-LDFLAGS= -L/opt/homebrew/opt/lapack/lib
+LDFLAGS=
 #-L/opt/homebrew/opt/lapack/lib 
 
 

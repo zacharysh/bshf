@@ -3,16 +3,13 @@
 
 #include <cstddef>
 #include <iostream>
-
 #include <cassert> // assert
-
 #include <vector>
-
-#include <utility> // pair ?
+//#include <utility> // pair ?
 
 #include "math_other.hpp"
 
-#include "../IO/io.hpp"
+#include "../IO/IO.hpp"
 
 // dsygv_ is a symbol in the LAPACK library files.
 // Documentation: http://www.netlib.org/lapack/explore-html/index.html
@@ -78,12 +75,11 @@ class Matrix
 template <typename T>
 class SquareMatrix : public Matrix<T>
 {
-    
     public:
     SquareMatrix(std::size_t size_)
-    : Matrix<T>(size_, size_) {}
+    : Matrix<T>(size_, size_) {};
 
-    auto get_size() -> std::size_t { return (*this).get_size_x(); }
+    auto get_size() -> std::size_t { return this->get_size_x(); }
 };
 
 namespace MatrixTools

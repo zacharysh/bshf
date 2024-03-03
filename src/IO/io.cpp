@@ -1,6 +1,15 @@
-#include "io.hpp"
+#include "IO.hpp"
 
-#include <sstream>
+/*
+auto IO::parse_arg_pair(std::initializer_list<std::string> key, std::string arg1, std::string args2) -> void
+{
+    if(std::stoi(arg2))
+    {
+        return value;
+    }
+}
+*/
+
 
 auto IO::msg::print_msg(std::string text) -> void
 {
@@ -71,7 +80,11 @@ auto IO::msg::print_values(std::initializer_list<std::pair<std::string, T...> > 
     
     for (std::pair<std::string, T...> iter : params)
     {
-        std::cout << "\033[0;36m" << iter.first << " = " << iter.second << "\033[0;0m";
+        std::cout << "\033[0;36m";
+        
+        if(iter.first != "")
+            std::cout << iter.first << " = ";
+        std::cout << iter.second << "\033[0;0m";
 
         if(iter != *(params.end()-1))
             std::cout << ", ";
@@ -115,6 +128,18 @@ auto IO::msg::error(std::pair<std::string, int> params, bool down_layer) -> void
     std::cout << ".\n";
 }
 
+auto IO::msg::error_msg(std::string msg) -> void
+{
+    IO::msg::print_msg("\033[0;31mError\033[0;0m", msg);
+    std::cout << ".\n";
+}
+
+auto IO::msg::warning(std::string msg) -> void
+{
+    IO::msg::print_new_msg("\033[0;33mWarning\033[0;0m:", msg);
+    std::cout << ".\n";
+}
+
 template <typename... T>
 auto IO::msg::construct(std::string msg, std::initializer_list<std::pair<std::string, T...> > params, bool down_layer) -> void
 {
@@ -124,3 +149,4 @@ auto IO::msg::construct(std::string msg, std::initializer_list<std::pair<std::st
 template void IO::msg::action(std::string action, std::string msg, std::initializer_list<std::pair<std::string, int> > params, bool new_layer);
 template void IO::msg::construct(std::string msg, std::initializer_list<std::pair<std::string, int> > params, bool new_layer); 
 template void IO::msg::construct(std::string msg, std::initializer_list<std::pair<std::string, double> > params, bool new_layer); 
+template void IO::msg::construct(std::string msg, std::initializer_list<std::pair<std::string, std::string> > params, bool new_layer); 
