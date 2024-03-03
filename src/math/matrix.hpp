@@ -52,15 +52,15 @@ class Matrix
 
     friend auto operator<<(std::ostream &os, const Matrix<T> &matrix) -> std::ostream&
     {
-        for(std::size_t i = 0; i < matrix.size_x; ++i)
+        for(std::size_t i = 0; i < matrix.m_size_x; ++i)
         {
             os << "|";
-            for(std::size_t j = 0; j < matrix.size_y - 1; ++j)
+            for(std::size_t j = 0; j < matrix.m_size_y - 1; ++j)
             {
                 //os << matrix(i,j) << ", ";
                 printf("%+1.4e, ", matrix(i,j));
             }
-            os << matrix(i, matrix.size_y - 1) << "|\n";
+            os << matrix(i, matrix.m_size_y - 1) << "|\n";
         }
         return os;
     }

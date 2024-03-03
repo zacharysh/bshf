@@ -19,7 +19,7 @@ SplineBasis::SplineBasis(const LinearGrid &r_grid_, int k_spline_, int n_spline_
 
 auto SplineBasis::construct_spline_vectors() -> void
 {
-    IO::msg::construct("basis vectors");
+    IO::msg::action("Constructing", "basis vectors");
     
     BSpline splines(k_spline, num_spl + 3, r_grid.r0, r_grid.r_max);
 
@@ -44,7 +44,7 @@ auto SplineBasis::construct_spline_vectors() -> void
 
 auto SplineBasis::construct_matrix() -> void
 {
-    IO::msg::construct("B-matrix");
+    IO::msg::action("Constructing", "B-matrix");
 
     #pragma omp parallel for
     for(int i = 0; i < num_spl; ++i)
@@ -52,9 +52,6 @@ auto SplineBasis::construct_matrix() -> void
         for(int j = 0; j <= i; ++j)
         {
             Bmatrix(i,j) = trapz_linear(r_grid.dr, bspl.at(i) * bspl.at(j));
-
-            // Only need to calculate bottom half.
-            Bmatrix(j,i) = Bmatrix(i,j);
         }
     }
 

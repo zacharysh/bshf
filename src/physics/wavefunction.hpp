@@ -21,9 +21,10 @@ class Electron
     int l;
     int m;
 
-    //bool spin_up;
+    // Assume the electron is actually there.
+    bool filled = true;
 
-    std::string state;
+    std::string state_label;
 
     double energy;
     
@@ -36,6 +37,9 @@ class Electron
     double r1_moment;
     double r2_moment;
     
+    Electron()
+    : n(), l(), m(), state_label(), energy(), coeffs(), basis_size(), P(), amplitude(), r1_moment(), r2_moment() {};
+
     Electron(const int n_, const int l_, const int m_, const double energy_, const std::vector<double> coeffs_, const SplineBasis &basis);
 
     // < r ^ k >

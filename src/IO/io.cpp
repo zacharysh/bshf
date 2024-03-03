@@ -47,23 +47,10 @@ auto IO::msg::done(bool up_layer) -> void
         std::cout << " \033[0;32mdone\033[0m.\n";
 }
 
-auto IO::msg::construct(std::string name, bool down_layer) -> void
+auto IO::msg::action(std::string action, std::string name, bool down_layer) -> void
 {
-    IO::msg::print_new_msg("Constructing", name);
+    IO::msg::print_new_msg(action, name);
     
-    if(down_layer)
-    {
-        IO::msg::depth += 1;
-        std::cout << ":\n";
-    }
-    else
-        std::cout << "...";
-}
-
-auto IO::msg::call(std::string name, bool down_layer) -> void
-{
-    IO::msg::print_new_msg("Calling", name);
-
     if(down_layer)
     {
         IO::msg::depth += 1;

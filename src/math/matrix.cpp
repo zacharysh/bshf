@@ -112,7 +112,7 @@ auto Matrix<T>::transpose() -> Matrix<T>
 // solves problems of the form Av = eBv.
 auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> B) -> std::pair<SquareMatrix<double>, std::vector<double> >
 {
-    IO::msg::call("LAPACK subroutine DYSGV");
+    IO::msg::action("Calling", "LAPACK subroutine DYSGV");
     
     int itype{ 1 };
     char jobz{'V'};

@@ -32,8 +32,8 @@ namespace msg
     template <typename... T>
     void action(std::string action, std::string msg, std::initializer_list<std::pair<std::string, T...> > params, bool down_layer = false);
 
-    auto construct(std::string msg, bool down_layer = false) -> void;
-    auto call(std::string msg, bool down_layer = false) -> void;
+    auto action(std::string action, std::string msg, bool down_layer = false) -> void;
+
     auto error_msg(std::string msg) -> void;
     void error(std::pair<std::string, int> params, bool down_layer = false);
     void warning(std::string msg);
