@@ -16,22 +16,11 @@ amplitude(std::vector<double>(basis_.grid_size()))
         state_label += "p";
     else if( l == 2)
         state_label += "d";
-    /*
-    if(spin_up)
-    {
-        state += "  " +std::to_string(2*l + 1) + "/2";
-    }
-    else
-    {
-        if ((2*l - 1) > 0)
-            state += " ";
-        state += " " + std::to_string(2*l - 1) + "/2";
-    }
-    */
         
     //IO::msg::construct<int>("electron state", {{"n", n_}, {"l", l_}, {"m", m_}});
     IO::msg::construct<std::string>("electron state", {{std::string(), state_label}});
 
+    // Change to scalar multiplication of a vector
     for (std::size_t i = 0; i < basis_.grid_size(); ++i)
     {
         for(std::size_t j = 0; j < basis_size; ++j)
@@ -63,23 +52,99 @@ auto Electron::calculate_radial_moment(const LinearGrid &r_grid, int k) -> doubl
     return trapz_linear(r_grid.dr, P * P * r_k);
 }
 
+// We assume a is the only empty state and b is the excited state.
+auto calculate_lifetime(Electron a, Electron b, const LinearGrid &r_grid) -> double
+{   
+    // Use experimental omega.
+    const auto omega = 0.06791;
+
+    assert((a.l == 0 && b.l == 1 && a.n == 2 && b.n == 2) && "Only works for 2p -> 2s transition currently.");
+
+    auto Rab = trapz_linear(r_grid.dr, a.P * r_grid.range * b.P);
+
+    auto gamma = 2.0 * Rab * Rab * omega * omega * omega / 3.0 * 1.071e10;
+
+    return 1/gamma;
+}
+
+#define EPSILON \u03B5
+#define DELTA \u0394
+
 auto print_states(std::vector<Electron> states) -> void
 {
-    
-    // Construct title.
-    // Construct headings.
-    
+    // TODO: Perhaps we wish to include the normalisation?
     //\u222Bdr|P(r)|\u00B2
 
-    //std::cout << " n | En    | predicted\n";
-    std::cout << "\n\033[0;36mResults:\033[0;0m\n";
-    //std::cout << "Key: '\033[0;96m*\033[0;0m' indicates excited state; '\033[0;33m-\033[0;0m' indicates unfilled state.\n";
-    std::cout << "Key: '*' indicates excited state; '-' indicates unfilled state.\n";
-    printf(" %7s %13s %13s %13s  %13s", "State", "E (au)", "E (eV)", "<r> (a0)", "<r\u00B2> (a0)");
-    std::cout << "\n";
-    for (auto psi : states)
+    std::string epsilon("\u03B5");
+    std::string delta("\u0394");
+
+    // Check if we will have to eventually print columns for energy correction.
+    bool print_perturbation = false;
+    for (auto iter : states)
+        if(iter.has_correction == true) { print_perturbation = true; };
+    
+    // Construct title.
+    std::cout << "\n\033[0;36mResults:\033[0;0m\n\n";
+    
+    // Construct headings.
+    printf(" %7s %14s %14s", "State", (epsilon + " (au)").c_str(), (epsilon + " (eV)").c_str());
+
+    if(print_perturbation == true)
     {
-        printf(" %7s %13.5f %13.5f %13.5f %13.5f\n",
-            psi.state_label.c_str(), psi.energy, PhysicalConstants::Eh_to_eV(psi.energy), psi.r1_moment, psi.r2_moment);
+        printf(" %15s %15s", (delta + epsilon + " (au)").c_str(), (delta + epsilon + " (eV)").c_str());
+        printf(" %16s %16s", (epsilon + "+" + delta + epsilon + " (au)").c_str(), (epsilon + "+" + delta + epsilon + " (eV)").c_str());
     }
+
+    printf(" %13s  %13s", "<r> (a0)", "<r\u00B2> (a0)");
+    std::cout << "\n";
+
+    // Bad name...
+    bool excited_state_present = false;
+    for (const auto &psi : states)
+    {
+        // First, print the state label.
+        print_state_label(psi, excited_state_present);
+        
+        printf(" %13.5f %13.5f", psi.energy, PhysicalConstants::Eh_to_eV(psi.energy));
+
+        if(print_perturbation == true)
+        {
+            printf(" %13.5f %13.5f", psi.energy_correction, PhysicalConstants::Eh_to_eV(psi.energy_correction));
+            printf(" %13.5f %13.5f", psi.energy + psi.energy_correction, PhysicalConstants::Eh_to_eV(psi.energy + psi.energy_correction));
+        }
+        printf(" %13.5f %13.5f\n", psi.r1_moment, psi.r2_moment);
+    }
+    std::cout   << (excited_state_present ? "\nKey: '\033[0;96m*\033[0;0m' indicates excited state; '\033[0;33m-\033[0;0m' indicates unfilled state."  : "")
+                << (print_perturbation ? ("\nN.B. " + epsilon + " is the unperturbed energy V = V_c + V_Gr. " + delta + epsilon + " is the first-order perturbative correction.") : "")
+                << "\n";
+}
+
+// Is there a better way to do this?
+inline
+auto print_state_label(const Electron &psi, bool &excited_state_present) -> void
+{
+    auto label = psi.state_label;
+
+    //if(psi.has_correction)
+    //    label.push_back('*');
+    
+
+    if(psi.filled == false)
+        {
+            std::cout << "\033[0;33m";
+            label = "-" + label;
+            printf(" %7s", label.c_str());
+            std::cout << "\033[0;0m";
+
+            excited_state_present = true;
+        }
+        else if(excited_state_present == true)
+        {
+            std::cout << "\033[0;96m";
+            label = "*" + label;
+            printf(" %7s", label.c_str());
+            std::cout << "\033[0;0m";
+        }
+        else
+            printf(" %7s", label.c_str());
 }

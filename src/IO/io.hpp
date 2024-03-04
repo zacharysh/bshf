@@ -3,7 +3,6 @@
 
 #include <string> // std::string
 #include <iostream> // std::cout
-#include <fstream> // std::fstream
 #include <vector> // std::vector
 
 namespace IO
@@ -17,7 +16,11 @@ namespace msg
     auto print_msg(std::string action, std::string text) -> void;
     auto print_new_msg(std::string action, std::string text) -> void;
 
+    template <typename T>
+    auto print_msg(T text) -> void;
+
     inline int depth = 0;
+    inline bool verbose = true;
 
     //is this the best way to do this?
 
@@ -36,7 +39,8 @@ namespace msg
 
     auto error_msg(std::string msg) -> void;
     void error(std::pair<std::string, int> params, bool down_layer = false);
-    void warning(std::string msg);
+    void warning(std::pair<std::string, int> params, bool down_layer = false);
+    void warning_msg(std::string msg);
 
     template <typename... T>
     void construct(std::string msg, std::initializer_list<std::pair<std::string, T...> > params, bool down_layer = false);

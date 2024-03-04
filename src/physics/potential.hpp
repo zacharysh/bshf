@@ -15,24 +15,34 @@ class Potential
     {
         Coulomb,
         Greens,
+        HF_Direct,
+        HF_Exchange,
         HartreeFock,
         Unknown
     };
 
-    private:
+    //private:
+
+    public:
     Type m_type;
     std::vector<double> m_values;
     
-    public:
     Potential() : m_type(Type::Unknown), m_values(std::vector<double>()) {};
-    Potential(Type type_, std::vector<double> values_) : m_type(type_), m_values(values_) {};
-    
-    static auto Coulomb(int Z, const LinearGrid &r_grid) -> Potential;
-    static auto Greens (int Z, const LinearGrid &r_grid) -> Potential;
+    Potential(int Z, Type type_, const LinearGrid &r_grid);
 
-    static auto construct_potential(int Z, Potential::Type type_, const LinearGrid &r_grid) -> Potential;
+
+    //auto operator=(const Potential &) -> Potential& = default;
+    //auto operator=(Potential &&) -> Potential& = default;
+    
+    static auto Coulomb(int Z, const LinearGrid &r_grid) -> std::vector<double>;
+    static auto Greens (int Z, const LinearGrid &r_grid) -> std::vector<double>;
 
     auto get_values() const -> const std::vector<double> { return m_values; };
+    auto get_type() -> Type { return m_type; }; // const ?
+
+
+    auto set_type(Type new_type_) -> void { (*this).m_type = new_type_;};
+    auto set_values(std::vector<double> new_values_) -> void { (*this).m_values = new_values_; };
 };
 
 

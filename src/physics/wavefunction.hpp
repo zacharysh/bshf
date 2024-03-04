@@ -22,11 +22,14 @@ class Electron
     int m;
 
     // Assume the electron is actually there.
-    bool filled = true;
+    bool filled {true};
 
     std::string state_label;
 
     double energy;
+
+    bool has_correction {false};
+    double energy_correction {0.0};
     
     std::vector<double> coeffs;
     std::size_t basis_size;
@@ -46,6 +49,9 @@ class Electron
     auto calculate_radial_moment(const LinearGrid &r_grid, int k) -> double;
 };
 
+auto calculate_lifetime(Electron a, Electron b, const LinearGrid &r_grid) -> double;
+
 auto print_states(std::vector<Electron> states) -> void;
+auto print_state_label(const Electron &psi, bool &excited_state_present) -> void;
 
 #endif

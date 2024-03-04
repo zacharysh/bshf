@@ -2,7 +2,7 @@
 #define SPLINE_BASIS_HPP_
 
 #include <vector>
-#include <limits> // epsilon
+#include <limits> // std::numeric_limits<double>::epsilon()
 
 #include "bspline.hpp"
 #include "grid.hpp"
@@ -32,6 +32,7 @@ class SplineBasis
 
     SquareMatrix<double> Bmatrix;
 
+    SplineBasis(): num_spl(), k_spline(), r_grid(), bspl(), bspl_derivative(), Bmatrix() {};
     SplineBasis(const LinearGrid &grid_, int k_spline, int n_spline);
 
     auto grid_size() const -> std::size_t { return r_grid.grid_size; }

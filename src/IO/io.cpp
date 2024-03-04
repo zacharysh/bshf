@@ -1,38 +1,37 @@
 #include "IO.hpp"
 
-/*
-auto IO::parse_arg_pair(std::initializer_list<std::string> key, std::string arg1, std::string args2) -> void
-{
-    if(std::stoi(arg2))
-    {
-        return value;
-    }
-}
-*/
-
-
+inline
 auto IO::msg::print_msg(std::string text) -> void
 {
-    std::cout << text;
+    if(verbose)
+        std::cout << text;
 }
+
+template <typename T>
+inline
+auto IO::msg::print_msg(T param) -> void
+{
+    if(verbose)
+        std::cout << param;
+}
+
+
 auto IO::msg::print_msg(std::string action, std::string text) -> void
 {
-    std::cout << action << " " << text;
+    IO::msg::print_msg(action + " " + text);
 }
 
 auto IO::msg::print_new_msg() -> void
 {
     for (int i = 0; i < depth; ++i)
-        std::cout << "  ";
-    std::cout << "> ";
+        IO::msg::print_msg("  ");
+    IO::msg::print_msg("> ");
 }
 
 auto IO::msg::print_new_msg(std::string action, std::string name) -> void
 {
-    for (int i = 0; i < depth; ++i)
-        std::cout << "  ";
-    std::cout << "> ";
-    IO::msg::print_msg(action, name);
+    print_new_msg();
+    print_msg(action, name);
 }
 
 auto IO::msg::done(bool up_layer) -> void
@@ -41,42 +40,45 @@ auto IO::msg::done(bool up_layer) -> void
     {
         print_new_msg();
         IO::msg::depth -= 1;
-        std::cout << "\033[0;32mDone\033[0m.\n";
+        print_msg("\033[0;32mDone\033[0m.\n");
     }
     else
-        std::cout << " \033[0;32mdone\033[0m.\n";
+        print_msg(" \033[0;32mdone\033[0m.\n");
 }
 
 auto IO::msg::action(std::string action, std::string name, bool down_layer) -> void
 {
-    IO::msg::print_new_msg(action, name);
+    print_new_msg(action, name);
     
     if(down_layer)
     {
-        IO::msg::depth += 1;
-        std::cout << ":\n";
+        depth += 1;
+        print_msg(":\n");
     }
     else
-        std::cout << "...";
+        print_msg("...");
 }
 
 template <typename... T>
 auto IO::msg::print_values(std::initializer_list<std::pair<std::string, T...> > params) -> void
 {
-    std::cout << " (";
+    print_msg(" (");
     
     for (std::pair<std::string, T...> iter : params)
     {
-        std::cout << "\033[0;36m";
+        print_msg("\033[0;36m");
         
         if(iter.first != "")
-            std::cout << iter.first << " = ";
-        std::cout << iter.second << "\033[0;0m";
+        {
+            print_msg(iter.first, "= ");
+        }
+        print_msg<T...>(iter.second);
+        print_msg("\033[0;0m");
 
         if(iter != *(params.end()-1))
-            std::cout << ", ";
+            print_msg(", ");
     }
-    std::cout << ")";
+    print_msg(")");
 }
 
 template <typename... T>
@@ -103,10 +105,10 @@ auto IO::msg::action(std::string action, std::string msg, std::initializer_list<
     if(down_layer)
     {
         IO::msg::depth += 1;
-        std::cout << ":\n";
+        IO::msg::print_msg(":\n");
     }
     else
-        std::cout << "...";
+        IO::msg::print_msg("...");
 }
 // FIX ME!
 auto IO::msg::error(std::pair<std::string, int> params, bool down_layer) -> void
@@ -118,10 +120,17 @@ auto IO::msg::error(std::pair<std::string, int> params, bool down_layer) -> void
 auto IO::msg::error_msg(std::string msg) -> void
 {
     IO::msg::print_msg("\033[0;31mError\033[0;0m", msg);
-    std::cout << ".\n";
+    IO::msg::print_msg(".\n");
 }
 
-auto IO::msg::warning(std::string msg) -> void
+auto IO::msg::warning(std::pair<std::string, int> params, bool down_layer) -> void
+{
+    IO::msg::print_new_msg();
+    IO::msg::print_msg<int>("\033[0;33mWarning\033[0;0m", {params}, down_layer);
+    IO::msg::print_msg(".\n");
+}
+
+auto IO::msg::warning_msg(std::string msg) -> void
 {
     IO::msg::print_new_msg("\033[0;33mWarning\033[0;0m:", msg);
     std::cout << ".\n";

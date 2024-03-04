@@ -79,6 +79,8 @@ class SquareMatrix : public Matrix<T>
     SquareMatrix(std::size_t size_)
     : Matrix<T>(size_, size_) {};
 
+    SquareMatrix() : Matrix<T>() {};
+
     auto get_size() -> std::size_t { return this->get_size_x(); }
 };
 

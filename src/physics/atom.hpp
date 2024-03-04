@@ -19,17 +19,34 @@ class Atom
     int Z;
 
     SplineBasis basis;
-    Potential nuclear_potential;
-    Potential interaction_potential;
+    Potential nuclear_potential {};
+    Potential interaction_potential {};
 
     std::vector<Electron> electrons {};
+
+
+    Atom() : Z(), basis() {};
 
     Atom(int Z_, Potential::Type nuclear_potential_type_, Potential::Type interaction_type_, const SplineBasis &basis_)
     : Z(Z_), basis(basis_)
     {
         IO::msg::construct<int>("Atomic system", {{"Z", Z_}}, true);
-        nuclear_potential = Potential::construct_potential(Z, nuclear_potential_type_, basis.r_grid);
-        interaction_potential = Potential::construct_potential(Z, interaction_type_, basis.r_grid);
+        nuclear_potential = Potential(Z, nuclear_potential_type_, basis.r_grid);
+        interaction_potential = Potential(Z, interaction_type_, basis.r_grid);
+    }
+
+
+    //auto operator=(const Atom &) -> Atom& = default;
+    //auto operator=(Atom &&) -> Atom& = default;
+
+    auto get_energies() -> std::vector<double>
+    {
+        std::vector<double> energies(electrons.size());
+        for(std::size_t i = 0; i < electrons.size(); ++i)
+        {
+            energies.at(i) = electrons.at(i).energy;
+        }
+    return energies;
     }
 }; // class Atom
 

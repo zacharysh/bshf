@@ -25,6 +25,22 @@ auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs) -
     return result;
 }
 
+auto operator*(const std::vector<double> &lhs, const double &rhs) -> std::vector<double> 
+{
+    auto result = lhs;
+    
+    for(std::size_t i = 0; i < lhs.size(); ++i)
+    {
+        result.at(i) *= rhs;
+    }
+    return result;
+}
+
+auto operator*(const double &lhs, const std::vector<double> &rhs) -> std::vector<double> 
+{
+    return rhs * lhs;
+}
+
 auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>
 {
     // assert they're the same size

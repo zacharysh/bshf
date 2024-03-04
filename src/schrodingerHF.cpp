@@ -20,6 +20,7 @@
 #include "physics/wavefunction.hpp"
 #include "physics/atom.hpp"
 #include "physics/solve/solve.hpp"
+#include "physics/solve/hartree_fock.hpp"
 #include "physics/potential.hpp"
 
 int main(int argc, char **argv)
@@ -72,8 +73,8 @@ int main(int argc, char **argv)
         {
             // Fix me.
             std::string state_arg(argv[i+1]);
-            if(state_arg == "2p")
-                {excited_valence_data = {2, 1}; excited_valence = true; }
+            if(state_arg == "2p") {excited_valence_data = {2, 1}; excited_valence = true; }
+            //else if(state_arg == "2s") {excited_valence_data = {2, 0}; excited_valence = true; fill_atom == false; }
         }
                 
         // Get rid of this?
@@ -98,8 +99,14 @@ int main(int argc, char **argv)
             // tolower?
             if(next_arg == "greens" || next_arg == "Greens")
                 interaction_type = Potential::Type::Greens;
-            else if(next_arg == "hartree-fock" || next_arg == "Hartree-Fock" || next_arg == "HF")
+            else if(next_arg == "self-consistent-hartree-fock" || next_arg == "Self-Consistent-Hartree-Fock" || next_arg == "SCHF")
+            {
+                interaction_type = Potential::Type::HF_Direct;
+            }
+            else if(next_arg == "hartree-fock" || next_arg == "Hartree-Fock")
+            {
                 interaction_type = Potential::Type::HartreeFock;
+            }
             else
             {
                 std::cout << "Invalid nuclear potential '" << next_arg << "' given.\n";
@@ -126,16 +133,16 @@ int main(int argc, char **argv)
 
     if(nuclear_potential == Potential::Type::Unknown)
     {
-        IO::msg::warning("No potential given, defaulting to Coulomb");
+        IO::msg::warning_msg("No potential given, defaulting to Coulomb");
         nuclear_potential = Potential::Type::Coulomb;
     }
     if(interaction_type == Potential::Type::Unknown)
     {
-        IO::msg::warning("No interaction potential specified. Ignoring");
+        IO::msg::warning_msg("No interaction potential specified. Ignoring");
     }
     if(N_grid_size == 0)
     {
-        IO::msg::warning("No grid size specified. Using default");
+        IO::msg::warning_msg("No grid size specified. Using default");
         N_grid_size = 10000;
     }
     if(l_vector.empty() && gen_spectrum == true)
@@ -144,8 +151,9 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    const double r0 = 1.0e-8;
-    const double rmax = 40.0;
+    
+    const double r0 = 1.0e-5;
+    const double rmax = 20.0;
     const int k_spline = 7;
     const int n_spline = 60;
     
@@ -154,39 +162,77 @@ int main(int argc, char **argv)
 
     Atom atomic_system(Z, nuclear_potential, interaction_type, basis);
     
-    if(interaction_type != Potential::Type::HartreeFock)
+    // Best way to do this?
+    switch (interaction_type)
     {
-        // Best way to do this?
-
-        if(fill_atom == true)
-            solve_atom(atomic_system);
-        else if(gen_spectrum == true)
-            for (auto iter : l_vector)
-                solve_schrodinger(atomic_system, iter, false);
-        
-        if(excited_valence)
+        case Potential::Type::Unknown:
         {
-            // In an atom such as lithium, the valence electron is the only state occupying the valence shell.
-            // e.g. lithium first excited state is 1s2 2s1 -> 1s2 2p1).
+            solve_atom(atomic_system);
 
-            //atomic_system.electrons.pop_back();
-            //atomic_system.electrons.back().state_label = "\033[0;33m-" + atomic_system.electrons.back().state_label + "\033[0;0m";
-            atomic_system.electrons.back().state_label.insert(0, "-");
-            atomic_system.electrons.back().filled = false;
+            //if(gen_spectrum == true)
+            //    for (auto iter : l_vector)
+            //        solve_schrodinger(atomic_system, iter, false);
 
-            solve_schrodinger(atomic_system, excited_valence_data.second, excited_valence_data.first);
-
-            //atomic_system.electrons.back().state_label = "\033[0;96m*" + atomic_system.electrons.back().state_label + "\033[0;0m";
-            atomic_system.electrons.back().state_label.insert(0, "*");
+            if(excited_valence)
+                solve_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
+            
+            break;
         }
-    }
-    else
-    {
+        case Potential::Type::Greens:
+        {
+            solve_atom(atomic_system);
+            greens_perturbation(atomic_system, atomic_system.electrons.back());
 
+            if(excited_valence)
+            {
+                solve_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
+
+                greens_perturbation(atomic_system, atomic_system.electrons.back());
+            }
+            break;
+        }
+        case Potential::Type::HF_Direct:
+        {
+            HartreeFock::solve_self_consistent(atomic_system);
+            
+            if(excited_valence)
+            {
+                solve_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
+            }
+            break;
+        }
+        case Potential::Type::HartreeFock:
+        {
+            HartreeFock::solve(atomic_system);
+            if(excited_valence)
+            {
+                HartreeFock::solve_full_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
+                //HartreeFock::solve_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
+            }
+                
+            break;
+        }
+        default:
+            return EXIT_FAILURE;
     }
 
     print_states(atomic_system.electrons);
+
+    const double expt_2p_energy = -0.13023;
+    const double expt_2p_lifetime = 27.102; // ns
+
+    auto predicted_2p_lifetime = calculate_lifetime(atomic_system.electrons.at(1), atomic_system.electrons.at(2), atomic_system.basis.r_grid);
+    predicted_2p_lifetime *= 10e8;
+
     
+    
+    if(excited_valence)
+    {
+        std::cout << "\nRelative error for 2p state energy: " << abs(abs(atomic_system.electrons.back().energy) - abs(expt_2p_energy)) / abs(expt_2p_energy) * 100.0 << "%.";
+        std::cout << "\n\n2p lifetime: " << predicted_2p_lifetime << "ns.";
+        std::cout << "\nRelative error for 2p lifetime: " << abs(abs(predicted_2p_lifetime) - abs(expt_2p_lifetime)) / abs(expt_2p_lifetime) * 100.0 << "%.\n";
+    }
+
     
     std::ofstream ofs;
     ofs.open("output/Li.txt", std::ofstream::out | std::ofstream::trunc);

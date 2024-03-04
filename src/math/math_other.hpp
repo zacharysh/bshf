@@ -13,6 +13,8 @@ auto simpson_linear(double dr, std::vector<double> func) -> double;
 //TODO FIX NAMESPACE
 // also. const? or not?
 auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>;
+auto operator*(const double &lhs, const std::vector<double> &rhs) -> std::vector<double>;
+auto operator*(const std::vector<double> &lhs, const double &rhs) -> std::vector<double>;
 auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>;
 
 #endif
