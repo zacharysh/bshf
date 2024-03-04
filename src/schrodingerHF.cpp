@@ -43,6 +43,7 @@ int main(int argc, char **argv)
 
     bool fill_atom = true;
     bool gen_spectrum = false;
+    bool calc_lifetime = false;
 
     std::pair<int, int> excited_valence_data {};
     bool excited_valence = false;
@@ -129,6 +130,10 @@ int main(int argc, char **argv)
             gen_spectrum = true;
             fill_atom = false;
         }
+        else if ((param == "--calc-lifetime" || param == "--calculate-lifetime"))
+        {
+            calc_lifetime = true;
+        }
     }
 
     if(nuclear_potential == Potential::Type::Unknown)
@@ -204,6 +209,7 @@ int main(int argc, char **argv)
         case Potential::Type::HartreeFock:
         {
             HartreeFock::solve(atomic_system);
+
             if(excited_valence)
             {
                 HartreeFock::solve_full_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
@@ -221,16 +227,19 @@ int main(int argc, char **argv)
     const double expt_2p_energy = -0.13023;
     const double expt_2p_lifetime = 27.102; // ns
 
-    auto predicted_2p_lifetime = calculate_lifetime(atomic_system.electrons.at(1), atomic_system.electrons.at(2), atomic_system.basis.r_grid);
-    predicted_2p_lifetime *= 10e8;
 
-    
-    
-    if(excited_valence)
+    if(calc_lifetime && excited_valence)
     {
-        std::cout << "\nRelative error for 2p state energy: " << abs(abs(atomic_system.electrons.back().energy) - abs(expt_2p_energy)) / abs(expt_2p_energy) * 100.0 << "%.";
-        std::cout << "\n\n2p lifetime: " << predicted_2p_lifetime << "ns.";
-        std::cout << "\nRelative error for 2p lifetime: " << abs(abs(predicted_2p_lifetime) - abs(expt_2p_lifetime)) / abs(expt_2p_lifetime) * 100.0 << "%.\n";
+        auto predicted_2p_lifetime = calculate_lifetime(atomic_system.electrons.at(1), atomic_system.electrons.at(2), atomic_system.basis.r_grid);
+        predicted_2p_lifetime *= 10e8;
+        
+        std::cout   << "\n2p energy: " << atomic_system.electrons.back().energy << "au (expt. " << expt_2p_energy << "au, "
+                    << abs(abs(atomic_system.electrons.back().energy) - abs(expt_2p_energy)) / abs(expt_2p_energy) * 100.0
+                    << "% error).";
+
+        std::cout   << "\n2p lifetime: " << predicted_2p_lifetime << "ns (expt. " << expt_2p_lifetime << "ns, "
+                    << abs(abs(predicted_2p_lifetime) - abs(expt_2p_lifetime)) / abs(expt_2p_lifetime) * 100.0
+                    << "% error).\n";
     }
 
     

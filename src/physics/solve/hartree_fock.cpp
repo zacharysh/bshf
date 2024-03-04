@@ -10,7 +10,7 @@ auto solve_full_schrodinger(Atom &atom, int l_number) -> void
 {
     IO::msg::action<int>("Solving", "H-like radial equation", {{"l", l_number}}, true);
     
-    auto Hamiltonian = construct_full_hamiltonian(atom, l_number);
+    auto Hamiltonian = construct_full_hamiltonian(atom, l_number, atom.electrons.back().l);
     auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(Hamiltonian, atom.basis.Bmatrix);
     
     for(std::size_t i = 0; i < atom.electrons.size(); ++i)
@@ -31,7 +31,7 @@ auto solve_full_schrodinger_state(const Atom &atom, int n, int l_number) -> Elec
 {
     IO::msg::action<int>("Solving", "H-like radial equation", {{"n", n}, {"l", l_number}}, true);
 
-    auto Hamiltonian = construct_full_hamiltonian(atom, l_number);
+    auto Hamiltonian = construct_full_hamiltonian(atom, l_number, atom.electrons.back().l);
     auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(Hamiltonian, atom.basis.Bmatrix);
     auto psi = Electron(n, l_number, 0, energies.at(n - l_number - 1), eigenvectors.get_row(n - l_number - 1), atom.basis);
 
@@ -39,15 +39,15 @@ auto solve_full_schrodinger_state(const Atom &atom, int n, int l_number) -> Elec
     return psi;
 }
 
-auto construct_full_hamiltonian(const Atom &atom, int l_number) -> SquareMatrix<double>
+auto construct_full_hamiltonian(const Atom &atom, int l_state, int l_max) -> SquareMatrix<double>
 {
-    IO::msg::construct<int>("Hamiltonian matrix with exchange term", {{"l", l_number}});
+    IO::msg::construct<int>("Hamiltonian matrix with exchange term", {{"l", l_state}});
 
     // generate centrifugal term
     std::vector<double> centrifugal(atom.basis.grid_size());
 
     for (std::size_t i = 0; i < atom.basis.grid_size(); ++i) 
-        centrifugal.at(i) =  l_number * (l_number + 1)  / (2.0 * atom.basis.r_grid.at(i) * atom.basis.r_grid.at(i));
+        centrifugal.at(i) =  l_state * (l_state + 1)  / (2.0 * atom.basis.r_grid.at(i) * atom.basis.r_grid.at(i));
 
     SquareMatrix<double> H(atom.basis.num_spl);
     double lambda_000 = 1.0/2.0;
@@ -59,8 +59,8 @@ auto construct_full_hamiltonian(const Atom &atom, int l_number) -> SquareMatrix<
     {
         for(int j = 0; j <= i; ++j)
         {
-            double lambda = l_number == 0 ? lambda_000 : lambda_101;
-            std::vector<double> exchange_j = -2.0 * lambda * YK::ykab(l_number, atom.electrons.front().P, atom.basis.bspl.at(j), atom.basis.r_grid.range) * atom.electrons.front().P;
+            double lambda = l_max == 0 ? lambda_000 : lambda_101;
+            std::vector<double> exchange_j = -2.0 * lambda * YK::ykab(l_max, atom.electrons.front().P, atom.basis.bspl.at(j), atom.basis.r_grid.range) * atom.electrons.front().P;
             
             
             H(i, j) = trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl_derivative.at(i) * atom.basis.bspl_derivative.at(j)) / 2.0
@@ -98,7 +98,9 @@ auto procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
 
         if(full_hamiltonian)
         {
-            atom.electrons.front() = solve_full_schrodinger_state(atom, 1, 0);
+                //atom.electrons.front() = solve_full_schrodinger(atom, iter.l);
+            for (auto iter : atom.electrons)
+                solve_full_schrodinger(atom, iter.l);
         }
         else
         {
@@ -130,8 +132,6 @@ auto solve_self_consistent(Atom &atom) -> void
     
     // First, solve Schrodinger equation with Greens.
     atom.interaction_potential = Potential(atom.Z, Potential::Type::Greens, atom.basis.r_grid);
-
-    // First, solve Schrodinger equation with only Coulomb.
     solve_atom(atom);
 
     std::vector<double> initial_energies(atom.get_energies());
@@ -152,27 +152,17 @@ auto solve_self_consistent(Atom &atom) -> void
 
 auto solve(Atom &atom) -> void
 {
+    // Only valid for Lithium at the moment (i.e. only 1s and 2s states are stored).
+    assert(atom.Z == 3 && "Only works for lithium at the moment.");
+
     IO::msg::action("Solving", "atom with Hartree-Fock method", true);
     
     // Start with self-consistent solution.
     solve_self_consistent(atom);
     std::vector<double> initial_energies(atom.get_energies());
 
-    print_states(atom.electrons);
-
-
     // Compute Hartree-Fock convergence algorithm.
     auto core_energy_timeseries = procedure(atom, true);
-
-    // Finally, solve the full atom with the new direct potential.
-    IO::msg::action("Constructing", "atomic spectra", true);
-
-    // Only valid for Lithium at the moment (i.e. only 1s and 2s states are stored).
-    assert(atom.Z == 3 && "Only works for lithium at the moment.");
-
-    solve_full_schrodinger(atom, 0);
-
-    IO::msg::done(true);
 
 
     IO::msg::done(true);
@@ -200,25 +190,14 @@ auto solve_full_excited_valence(Atom &atom, const int n, const int l) -> void
     // In an atom such as lithium, the valence electron is the only state occupying the valence shell.
     // e.g. lithium first excited state is 1s2 2s1 -> 1s2 2p1).
 
-    solve(atom);
     auto empty_shell = atom.electrons.back();
 
     // Assuming the valence is the back, which it should be.
     atom.electrons.back() = solve_schrodinger_state(atom, n, l);
     
-    print_states(atom.electrons);
 
     // Rerun Hartree-Fock with 2p instead of 1s.
     auto core_energy_timeseries = procedure(atom, true);
-
-    // Finally, solve the full atom with the new direct potential.
-    //IO::msg::action("Constructing", "atomic spectra", true);
-
-    //for (auto iter : atom.electrons)
-    //    solve_full_schrodinger(atom, iter.l);
-    solve_full_schrodinger(atom, l);
-
-    IO::msg::done(true);
 
     auto valence_shell = atom.electrons.back();
 

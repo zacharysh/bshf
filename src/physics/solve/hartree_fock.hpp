@@ -14,7 +14,7 @@
 namespace HartreeFock
 {
 
-auto construct_full_hamiltonian(const Atom &atom, int l_number) -> SquareMatrix<double>;
+auto construct_full_hamiltonian(const Atom &atom, int l_state, int l_max) -> SquareMatrix<double>;
 
 auto solve_full_schrodinger_state(const Atom &atom, int n, int l_number) -> Electron;
 auto solve_full_schrodinger(Atom &atom, int l_number)  -> void;
