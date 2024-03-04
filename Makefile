@@ -8,14 +8,12 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
 INC_DIRS := $(shell find $(SRC_DIR) -type d) 
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-#-I/opt/homebrew/opt/lapack/include
 
-LDFLAGS=
-#-L/opt/homebrew/opt/lapack/lib 
+LDFLAGS= -llapack -lblas -fopenmp
 
 
-CC=g++ -llapack -lblas -fopenmp
-CPPFLAGS= -O3 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion 
+CC=g++ 
+CPPFLAGS= -O3 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion
 # -Wshadow -Wsign-conversion
 
 
