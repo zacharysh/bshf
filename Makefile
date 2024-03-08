@@ -9,8 +9,8 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 INC_DIRS := $(shell find $(SRC_DIR) -type d) 
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-LDFLAGS= -llapack -lblas -fopenmp
-
+LDFLAGS= -llapack -lblas
+#  -fopenmp
 
 CC=g++ 
 CPPFLAGS= -O3 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion

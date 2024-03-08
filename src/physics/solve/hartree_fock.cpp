@@ -4,14 +4,13 @@
 namespace HartreeFock
 {
 
-
 // Requires states to be done already.
 auto solve_full_schrodinger(Atom &atom, int l_number) -> void
 {
     IO::msg::action<int>("Solving", "H-like radial equation", {{"l", l_number}}, true);
     
     auto Hamiltonian = construct_full_hamiltonian(atom, l_number, atom.electrons.back().l);
-    auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(Hamiltonian, atom.basis.Bmatrix);
+    auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(std::move(Hamiltonian), atom.basis.Bmatrix);
     
     for(std::size_t i = 0; i < atom.electrons.size(); ++i)
     {        
@@ -32,47 +31,43 @@ auto solve_full_schrodinger_state(const Atom &atom, int n, int l_number) -> Elec
     IO::msg::action<int>("Solving", "H-like radial equation", {{"n", n}, {"l", l_number}}, true);
 
     auto Hamiltonian = construct_full_hamiltonian(atom, l_number, atom.electrons.back().l);
-    auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(Hamiltonian, atom.basis.Bmatrix);
+    auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(std::move(Hamiltonian), atom.basis.Bmatrix);
     auto psi = Electron(n, l_number, 0, energies.at(n - l_number - 1), eigenvectors.get_row(n - l_number - 1), atom.basis);
 
     IO::msg::done(true);
     return psi;
 }
 
-auto construct_full_hamiltonian(const Atom &atom, int l_state, int l_max) -> SquareMatrix<double>
+auto construct_full_hamiltonian(const Atom &atom, const int l_state, const int l_max) -> SquareMatrix<double>
 {
     IO::msg::construct<int>("Hamiltonian matrix with exchange term", {{"l", l_state}});
 
     // generate centrifugal term
     std::vector<double> centrifugal(atom.basis.grid_size());
-
-    for (std::size_t i = 0; i < atom.basis.grid_size(); ++i) 
-        centrifugal.at(i) =  l_state * (l_state + 1)  / (2.0 * atom.basis.r_grid.at(i) * atom.basis.r_grid.at(i));
+    std::transform(atom.get_range_inv().begin(), atom.get_range_inv().end(), centrifugal.begin(),
+            [l_state] (auto r_inv) { return 0.5 * l_state * (l_state + 1.0) * r_inv * r_inv; });
 
     SquareMatrix<double> H(atom.basis.num_spl);
-    double lambda_000 = 1.0/2.0;
-    double lambda_101 = 1.0/6.0;
+
+    auto potential = atom.nuclear_potential.values + centrifugal + atom.interaction_potential.values;
 
     // We only fill the bottom half since DSYGV_ anticipates a guaranteed symmetric-definite matrix.
-    #pragma omp parallel for
+
     for(int i = 0; i < atom.basis.num_spl; ++i)
     {
         for(int j = 0; j <= i; ++j)
         {
-            double lambda = l_max == 0 ? lambda_000 : lambda_101;
-            std::vector<double> exchange_j = -2.0 * lambda * YK::ykab(l_max, atom.electrons.front().P, atom.basis.bspl.at(j), atom.basis.r_grid.range) * atom.electrons.front().P;
+            auto lambda = (l_max == 0) ? 0.5 : 1.0/6.0;
+            std::vector<double> exchange_j = -2.0 * lambda * YK::ykab(l_max, atom.electrons.front().P, atom.basis.bspl.at(j), atom.get_range()) * atom.electrons.front().P;
             
-            
-            H(i, j) = trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl_derivative.at(i) * atom.basis.bspl_derivative.at(j)) / 2.0
-                    + trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * atom.nuclear_potential.get_values() * atom.basis.bspl.at(j))
-                    + trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * centrifugal * atom.basis.bspl.at(j))
-                    + trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * atom.interaction_potential.get_values() * atom.basis.bspl.at(j))
-                    + trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * exchange_j);
+            H(i, j) = 0.5 * simpson_linear(atom.basis.r_grid.dr, atom.basis.bspl_derivative.at(i) * atom.basis.bspl_derivative.at(j))
+                    + simpson_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * potential * atom.basis.bspl.at(j))
+                    + simpson_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * exchange_j);
         }
     }
 
     IO::msg::done();
-    return H;
+    return SquareMatrix<double>(H);
 }
 
 auto procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
@@ -87,11 +82,13 @@ auto procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
 
     const auto energy_threshold = 1e-6;
 
+    
+
     while (rel_energy_diff >= energy_threshold)
     {
         IO::msg::action<double>("Performing", "Hartree iteration", {{"iteration", iteration}});
 
-        atom.interaction_potential.set_values(2.0 * YK::ykab(0, atom.electrons.front().P, atom.electrons.front().P, atom.basis.r_grid.range));
+        atom.interaction_potential.values = 2.0 * YK::ykab(0, atom.electrons.front().P, atom.electrons.front().P, atom.get_range());
 
         // Be quiet and save screen space.
         IO::msg::verbose = false;
@@ -99,8 +96,8 @@ auto procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
         if(full_hamiltonian)
         {
                 //atom.electrons.front() = solve_full_schrodinger(atom, iter.l);
-            for (auto iter : atom.electrons)
-                solve_full_schrodinger(atom, iter.l);
+            for (auto iter : atom.electrons){
+                solve_full_schrodinger(atom, iter.l);}
         }
         else
         {
@@ -115,14 +112,17 @@ auto procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
 
         ++iteration;
 
+        
         // We can be noisy again.
         IO::msg::verbose = true;
+
         IO::msg::done();
 
         // Don't want to overflow.
         if(iteration >= 20)
             core_energies.reserve(core_energies.size() + sizeof(double));
     }
+
     return core_energies;
 }
 
@@ -131,15 +131,15 @@ auto solve_self_consistent(Atom &atom) -> void
     IO::msg::action("Solving", "atom with Self-Consistent-Hartree-Fock interaction", true);
     
     // First, solve Schrodinger equation with Greens.
-    atom.interaction_potential = Potential(atom.Z, Potential::Type::Greens, atom.basis.r_grid);
+    atom.interaction_potential = { Potential(atom.Z, Potential::Type::Greens, atom.basis.r_grid) };
     solve_atom(atom);
 
     std::vector<double> initial_energies(atom.get_energies());
 
     // Book-keeping
-    atom.interaction_potential.set_type(Potential::Type::HF_Direct);
+    atom.interaction_potential.type = Potential::Type::HF_Direct;
 
-    // Compute Hartree-Fock convergence algorithm.
+    // Compute Hartree convergence algorithm.
     auto core_energy_timeseries = procedure(atom, false);
 
     atom.electrons = {};
@@ -190,21 +190,21 @@ auto solve_full_excited_valence(Atom &atom, const int n, const int l) -> void
     // In an atom such as lithium, the valence electron is the only state occupying the valence shell.
     // e.g. lithium first excited state is 1s2 2s1 -> 1s2 2p1).
 
-    auto empty_shell = atom.electrons.back();
+    auto empty_shell = std::move(atom.electrons.back());
 
     // Assuming the valence is the back, which it should be.
-    atom.electrons.back() = solve_schrodinger_state(atom, n, l);
+    atom.electrons.back() = solve_full_schrodinger_state(atom, n, l);
     
-
     // Rerun Hartree-Fock with 2p instead of 1s.
     auto core_energy_timeseries = procedure(atom, true);
 
-    auto valence_shell = atom.electrons.back();
+    auto valence_shell = std::move(atom.electrons.back());
+    
 
-    atom.electrons.back() = empty_shell;
+    atom.electrons.back() = std::move(empty_shell);
     atom.electrons.back().filled = false;
 
-    atom.electrons.push_back(valence_shell);
+    atom.electrons.push_back(std::move(valence_shell));
 
     IO::msg::done(true);
 }

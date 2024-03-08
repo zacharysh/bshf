@@ -8,7 +8,7 @@
 namespace Range {
 
 // Returns a range of 'number' values, spread out between 'first' and 'last' on
-// a scale according to function f. First and last of range is guarenteed to be
+// a scale according to function f. First and last of range is guaranteed to be
 // those given
 template <typename Real, typename Function>
 std::vector<Real> F_range(Real first, Real last, int number, Function f) {

@@ -1,6 +1,6 @@
 #include "wavefunction.hpp"
 
-Electron::Electron(const int n_, const int l_, const int m_, const double energy_, const std::vector<double> coeffs_, const SplineBasis &basis_)
+Electron::Electron(const int n_, const int l_, const int m_, const double energy_, const std::vector<double> &coeffs_, const SplineBasis &basis_)
 : n(n_), l(l_), m(m_),// spin_up(spin_up_),
 state_label(std::to_string(n)),
 energy(energy_),
@@ -20,22 +20,18 @@ amplitude(std::vector<double>(basis_.grid_size()))
     //IO::msg::construct<int>("electron state", {{"n", n_}, {"l", l_}, {"m", m_}});
     IO::msg::construct<std::string>("electron state", {{std::string(), state_label}});
 
-    // Change to scalar multiplication of a vector
-    for (std::size_t i = 0; i < basis_.grid_size(); ++i)
-    {
-        for(std::size_t j = 0; j < basis_size; ++j)
-        {
-            P.at(i) += basis_.bspl.at(j).at(i) * coeffs.at(j);
-        }
-        amplitude.at(i) = P.at(i) / basis_.r_grid.range.at(i);
-    }
+    P = std::inner_product(basis_.bspl.begin(), basis_.bspl.end(), coeffs.begin(), P,
+        [] (auto a, auto b) {return a + b;}, [] (auto &b, auto &c) {return b * c;});
 
-    //IO::msg::print_values<double>({{"E", energy}, {"\u222Bdr|P(r)|\u00B2", trapz_linear(basis.dr, P * P)}});
+    amplitude = P;
+
+    std::transform(basis_.r_grid.range_inv.begin(), basis_.r_grid.range_inv.end(), amplitude.begin(), amplitude.begin(),
+            [] (auto r_inv, auto P) { return P * r_inv; });
 
     r1_moment = calculate_radial_moment(basis_.r_grid, 1);
     r2_moment = calculate_radial_moment(basis_.r_grid, 2);
 
-    IO::msg::print_values<double>({{"\u222Bdr|P(r)|\u00B2", trapz_linear(basis_.r_grid.dr, P * P)}});
+    IO::msg::print_values<double>({{"\u222Bdr|P(r)|\u00B2", simpson_linear(basis_.r_grid.dr, P * P)}});
 
     
     IO::msg::done();
@@ -45,11 +41,12 @@ auto Electron::calculate_radial_moment(const LinearGrid &r_grid, int k) -> doubl
 {   
 
     auto r_k = r_grid.range;
+
     // better way?
     for (int i = 1; i < k; ++i)
         r_k = r_k * r_grid.range;
 
-    return trapz_linear(r_grid.dr, P * P * r_k);
+    return simpson_linear(r_grid.dr, P * P * r_k);
 }
 
 // We assume a is the only empty state and b is the excited state.
@@ -60,23 +57,21 @@ auto calculate_lifetime(Electron a, Electron b, const LinearGrid &r_grid) -> dou
 
     assert((a.l == 0 && b.l == 1 && a.n == 2 && b.n == 2) && "Only works for 2p -> 2s transition currently.");
 
-    auto Rab = trapz_linear(r_grid.dr, a.P * r_grid.range * b.P);
+    auto Rab = simpson_linear(r_grid.dr, a.P * r_grid.range * b.P);
 
     auto gamma = 2.0 * Rab * Rab * omega * omega * omega / 3.0 * 1.071e10;
+    //auto gamma = 2.0 * pow(Rab, 2) * pow(omega, 3) / 3.0 * 1.071e10;
 
     return 1/gamma;
 }
-
-#define EPSILON \u03B5
-#define DELTA \u0394
 
 auto print_states(std::vector<Electron> states) -> void
 {
     // TODO: Perhaps we wish to include the normalisation?
     //\u222Bdr|P(r)|\u00B2
 
-    std::string epsilon("\u03B5");
-    std::string delta("\u0394");
+    const std::string epsilon("\u03B5");
+    const std::string delta("\u0394");
 
     // Check if we will have to eventually print columns for energy correction.
     bool print_perturbation = false;
@@ -125,9 +120,6 @@ auto print_state_label(const Electron &psi, bool &excited_state_present) -> void
 {
     auto label = psi.state_label;
 
-    //if(psi.has_correction)
-    //    label.push_back('*');
-    
 
     if(psi.filled == false)
         {

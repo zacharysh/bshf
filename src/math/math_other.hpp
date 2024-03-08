@@ -2,19 +2,26 @@
 #define MATH_OTHER_HPP_
 
 #include <vector>
+#include <algorithm>
+#include <numeric>
 
 #include "../IO/IO.hpp"
 
 //template <typename T>
-auto trapz_linear(double dr, std::vector<double> func) -> double;
-auto simpson_linear(double dr, std::vector<double> func) -> double;
+auto trapz_linear(double dr, const std::vector<double> &func) -> double;
+auto simpson_linear(double dr, const std::vector<double> &func) -> double;
 
 
 //TODO FIX NAMESPACE
 // also. const? or not?
-auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>;
-auto operator*(const double &lhs, const std::vector<double> &rhs) -> std::vector<double>;
-auto operator*(const std::vector<double> &lhs, const double &rhs) -> std::vector<double>;
-auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>;
+auto operator*(const std::vector<double> &lhs, const double &rhs)                   -> std::vector<double>;
+auto operator*(const double &lhs, const std::vector<double> &rhs)                   -> std::vector<double>;
+
+
+auto operator+=(std::vector<double> &lhs, const std::vector<double> &rhs)           -> std::vector<double>;
+auto operator*=(std::vector<double> &lhs, const std::vector<double> &rhs)           -> std::vector<double>;
+
+auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs)      -> const std::vector<double>;
+auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs)      -> const std::vector<double>;
 
 #endif

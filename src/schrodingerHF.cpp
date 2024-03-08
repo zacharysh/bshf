@@ -148,14 +148,14 @@ int main(int argc, char **argv)
     if(N_grid_size == 0)
     {
         IO::msg::warning_msg("No grid size specified. Using default");
-        N_grid_size = 10000;
+        N_grid_size = 30001;
     }
     if(l_vector.empty() && gen_spectrum == true)
     {
         IO::msg::error_msg("No l number given");
         return EXIT_FAILURE;
     }
-
+    
     
     const double r0 = 1.0e-5;
     const double rmax = 20.0;
@@ -173,10 +173,6 @@ int main(int argc, char **argv)
         case Potential::Type::Unknown:
         {
             solve_atom(atomic_system);
-
-            //if(gen_spectrum == true)
-            //    for (auto iter : l_vector)
-            //        solve_schrodinger(atomic_system, iter, false);
 
             if(excited_valence)
                 solve_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
@@ -227,7 +223,7 @@ int main(int argc, char **argv)
     const double expt_2p_energy = -0.13023;
     const double expt_2p_lifetime = 27.102; // ns
 
-
+    // 2p1/2 lifetime: 1.80415% error
     if(calc_lifetime && excited_valence)
     {
         auto predicted_2p_lifetime = calculate_lifetime(atomic_system.electrons.at(1), atomic_system.electrons.at(2), atomic_system.basis.r_grid);
@@ -241,7 +237,6 @@ int main(int argc, char **argv)
                     << abs(abs(predicted_2p_lifetime) - abs(expt_2p_lifetime)) / abs(expt_2p_lifetime) * 100.0
                     << "% error).\n";
     }
-
     
     std::ofstream ofs;
     ofs.open("output/Li.txt", std::ofstream::out | std::ofstream::trunc);
@@ -257,7 +252,7 @@ int main(int argc, char **argv)
         ofs << basis.r_grid.at(i);
         for(int j = 0; j < (int)atomic_system.electrons.size(); ++j)
         {
-            ofs << ", " << atomic_system.electrons.at(j).P.at(i);
+            ofs << ", " << atomic_system.electrons.at(j).amplitude.at(i);
         }
         ofs << "\n";
     }

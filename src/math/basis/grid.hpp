@@ -3,44 +3,46 @@
 
 #include <vector>
 
+#include <numeric> // std::iota
+#include <algorithm> // std::iota, std::transform
+
 #include "../../IO/IO.hpp"
 
-class Grid
+class LinearGrid
 {
     public:
-    const double r0;
-    const double r_max;
-    std::vector<double> range;
     std::size_t grid_size;
+    double r0;
+    double r_max;
+    double dr;
+    std::vector<double> range;
+    std::vector<double> range_inv;
 
 
-    Grid() : r0(), r_max(), range(), grid_size() {};
+    LinearGrid() : r0(), r_max(), range(), grid_size() {};
 
-    Grid(double r0_, double r_max_, std::vector<double> range_)
-    : r0(r0_), r_max(r_max_), range(range_), grid_size(range_.size()) {};
+    LinearGrid(double r0_, double r_max_, std::size_t grid_size_)
+    : grid_size(grid_size_),
+    r0(r0_), r_max(r_max_),
+    dr((r_max_ - r0_) / (static_cast<int>(grid_size_) - 1.0)),
+    range(std::vector<double>(grid_size_)),
+    range_inv(std::vector<double>(grid_size_))
+    {
+        IO::msg::construct<double>("linear grid", {{"r_min", r0_}, {"r_max", r_max_}, {"num_points", grid_size_}});
+
+        std::generate(range.begin(), range.end(),
+            [n=0, *this] () mutable
+                { return ((n++) * dr + r0); });
+        
+
+        std::transform(range.begin(), range.end(), range_inv.begin(),
+            [] (auto r) { return 1.0 / r; });
+
+        IO::msg::done();
+    };
 
     auto at(std::size_t i) const -> double { return range.at(i); }
     
-};
-
-class LinearGrid : public Grid
-{
-    public:
-    const double dr;
-
-    LinearGrid() : dr(), Grid() {};
-
-    LinearGrid(double r0_, double r_max_, std::size_t grid_size_)
-    : dr((r_max_ - r0_) / (static_cast<int>(grid_size_) - 1)),
-    Grid(r0_, r_max_, std::vector<double>(grid_size_))
-    {
-        IO::msg::construct<double>("linear grid", {{"r_min", r0_}, {"r_max", r_max_}, {"num_points", grid_size_}});
-        
-        for(int i = 0; i < static_cast<int>(grid_size_); ++i)
-            range.at(i) = i * dr + r0_;
-
-        IO::msg::done();
-    }
 };
 
 #endif

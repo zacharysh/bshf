@@ -21,13 +21,14 @@
 #include "../potential.hpp"
 
 
-auto construct_hamiltonian_matrix(const Atom &system, int l_number) -> SquareMatrix<double>;
+auto construct_hamiltonian_matrix(const Atom &system, const int l_number) -> SquareMatrix<double>;
 
-auto solve_schrodinger_state(const Atom &atom, int n_number, int l_number) -> Electron;
+auto solve_schrodinger_state(Atom &atom, const int n_number, const int l_number) -> Electron;
 
-auto solve_schrodinger(Atom &atom, int l_number, bool consider_atom_Z) -> void;
+auto solve_schrodinger(Atom &atom, const int l_number, const bool consider_atom_Z) -> void;
 
 auto solve_atom(Atom &atom) -> void;
+
 auto solve_excited_valence(Atom &atom, const int n, const int l) -> void;
 
 auto greens_perturbation(const Atom &atom, Electron &psi) -> void;

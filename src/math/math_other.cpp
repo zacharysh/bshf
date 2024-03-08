@@ -1,38 +1,37 @@
 #include "math_other.hpp"
 
-auto trapz_linear(double dr, std::vector<double> func) -> double
+auto trapz_linear(double dr, const std::vector<double> &func) -> double
 {
-    double result {0.0};
+    double result = 0.0;
 
     for (std::size_t i = 0; i < func.size() - 1; ++i)
     {
         result += func.at(i+1) + func.at(i);
     }
 
-    return result * dr / 2.0;
+    return 0.5 * result * dr;
 }
 
-// TODO NAMESPACE FIX UP!
-
-auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double> 
+auto simpson_linear(double dr, const std::vector<double> &func) -> double
 {
-    auto result = lhs;
-    
-    for(std::size_t i = 0; i < lhs.size(); ++i)
+    auto result = func.front() + func.back();
+
+    for (std::size_t i = 1; i < func.size() - 1; ++i)
     {
-        result.at(i) *= rhs.at(i);
+        auto w = (i % 2 == 0) ? 2.0 : 4.0;
+        result += func.at(i) * w;
     }
-    return result;
+
+    return result * dr / 3.0;
 }
 
-auto operator*(const std::vector<double> &lhs, const double &rhs) -> std::vector<double> 
+// TODO: namespace fix up
+auto operator*(const std::vector<double> &lhs, const double &rhs) -> std::vector<double>
 {
-    auto result = lhs;
-    
-    for(std::size_t i = 0; i < lhs.size(); ++i)
-    {
-        result.at(i) *= rhs;
-    }
+    std::vector<double> result {lhs};
+
+    std::transform(result.begin(), result.end(), result.begin(),
+        [rhs] (auto x) { return (x * rhs); });
     return result;
 }
 
@@ -41,14 +40,35 @@ auto operator*(const double &lhs, const std::vector<double> &rhs) -> std::vector
     return rhs * lhs;
 }
 
-auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>
+
+auto operator+=(std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>
 {
     // assert they're the same size
-    auto result = lhs;
+    // use std::fma
+    std::transform(lhs.begin(), lhs.end(), lhs.begin(),
+        [n = 0, rhs] (auto x) mutable { return (x + rhs.at(n++)); });
+
+    return lhs;
+}
+
+auto operator*=(std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>
+{
+    // assert they're the same size
     
-    for(std::size_t i = 0; i < lhs.size(); ++i)
-    {
-        result.at(i) += rhs.at(i);
-    }
-    return result;
+    std::transform(lhs.begin(), lhs.end(), lhs.begin(),
+        [n = 0, rhs] (auto x) mutable { return (x * rhs.at(n++)); });
+
+    return lhs;
+}
+
+auto operator+(const std::vector<double> &lhs, const std::vector<double> &rhs) -> const std::vector<double>
+{
+    std::vector<double> result = {lhs};
+    return result += rhs;
+}
+
+auto operator*(const std::vector<double> &lhs, const std::vector<double> &rhs) -> const std::vector<double> 
+{
+    std::vector<double> result = {lhs};
+    return result *= rhs;
 }

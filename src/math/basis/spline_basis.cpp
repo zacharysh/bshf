@@ -23,21 +23,17 @@ auto SplineBasis::construct_spline_vectors() -> void
     
     BSpline splines(k_spline, num_spl + 3, r_grid.r0, r_grid.r_max);
 
-    auto h = sqrt(std::numeric_limits<double>::epsilon());
+    const auto h = sqrt(std::numeric_limits<double>::epsilon());
 
-    #pragma omp parallel for
-    for (int i = 2; i < num_spl + 2; ++i)
+    for (auto n = 2; n < num_spl + 2; ++n)
     {
-        for (std::size_t j = 0; j < r_grid.grid_size; ++j)
-        {
-            bspl.at(i-2).at(j) = splines.b(i, r_grid.range.at(j));
-            
-            // Dividing by the difference rather than 2.0 * h is mathematically equivalent
-            // but reduces error due to subtraction of small numbers.
-            bspl_derivative.at(i-2).at(j) =
-            (splines.b(i, r_grid.range.at(j) + h) - splines.b(i, r_grid.range.at(j) - h)) / ((r_grid.range.at(j)+h) - ((r_grid.range.at(j)-h)));
-        }
+        std::transform(r_grid.range.begin(), r_grid.range.end(), bspl.at(n - 2).begin(),
+                [splines, n] (auto r) { return splines.b(n, r); });
+
+        std::transform(r_grid.range.begin(), r_grid.range.end(), bspl_derivative.at(n - 2).begin(),
+                [h, splines, n] (auto r) { return (splines.b(n, r + h) - splines.b(n, r - h)) / ((r + h) - (r - h)); });
     }
+    
 
     IO::msg::done();
 }
@@ -46,7 +42,6 @@ auto SplineBasis::construct_matrix() -> void
 {
     IO::msg::action("Constructing", "B-matrix");
 
-    #pragma omp parallel for
     for(int i = 0; i < num_spl; ++i)
     {
         for(int j = 0; j <= i; ++j)
@@ -54,6 +49,7 @@ auto SplineBasis::construct_matrix() -> void
             Bmatrix(i,j) = trapz_linear(r_grid.dr, bspl.at(i) * bspl.at(j));
         }
     }
+
 
     IO::msg::done();
 }

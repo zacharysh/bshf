@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <numeric>
 
 #include "../math/basis/spline_basis.hpp"
 #include "../math/math_other.hpp"
@@ -14,7 +16,6 @@
 class Electron
 {
     private:
-
 
     public:
     int n;
@@ -43,7 +44,7 @@ class Electron
     Electron()
     : n(), l(), m(), state_label(), energy(), coeffs(), basis_size(), P(), amplitude(), r1_moment(), r2_moment() {};
 
-    Electron(const int n_, const int l_, const int m_, const double energy_, const std::vector<double> coeffs_, const SplineBasis &basis);
+    Electron(const int n_, const int l_, const int m_, const double energy_, const std::vector<double> &coeffs_, const SplineBasis &basis);
 
     // < r ^ k >
     auto calculate_radial_moment(const LinearGrid &r_grid, int k) -> double;

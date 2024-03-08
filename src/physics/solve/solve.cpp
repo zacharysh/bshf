@@ -1,24 +1,24 @@
 #include "solve.hpp"
 
 
-auto construct_hamiltonian_matrix(const Atom &atom, int l_number) -> SquareMatrix<double>
+auto construct_hamiltonian_matrix(const Atom &atom, const int l_number) -> SquareMatrix<double>
 {
     IO::msg::construct<int>("Hamiltonian matrix", {{"l", l_number}});
 
     // generate centrifugal term
     std::vector<double> centrifugal(atom.basis.grid_size());
 
-    for (std::size_t i = 0; i < atom.basis.grid_size(); ++i) 
-        centrifugal.at(i) =  l_number * (l_number + 1)  / (2.0 * atom.basis.r_grid.at(i) * atom.basis.r_grid.at(i));
+    std::transform(atom.get_range_inv().begin(), atom.get_range_inv().end(), centrifugal.begin(),
+            [l_number] (auto r_inv) { return 0.5 * l_number * (l_number + 1.0) * r_inv * r_inv; });
 
     SquareMatrix<double> H(atom.basis.num_spl);
 
-    std::vector<double> potential = atom.nuclear_potential.get_values();
+    std::vector<double> potential = {atom.nuclear_potential.values + centrifugal};
 
     // AAAHHHHH! Fix me!
-    if ( !atom.interaction_potential.get_values().empty() )
+    if ( !atom.interaction_potential.values.empty() )
     {
-        potential = potential + atom.interaction_potential.get_values(); // Fix operators.
+        potential += atom.interaction_potential.values; // Fix operators.
     }
     else
         std::cout << " (no interaction)";
@@ -29,17 +29,16 @@ auto construct_hamiltonian_matrix(const Atom &atom, int l_number) -> SquareMatri
     {
         for(int j = 0; j <= i; ++j)
         {
-            H(i, j) = trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl_derivative.at(i) * atom.basis.bspl_derivative.at(j)) / 2.0
-                    + trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * potential * atom.basis.bspl.at(j))
-                    + trapz_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * centrifugal * atom.basis.bspl.at(j));
+            H(i, j) = 0.5 * simpson_linear(atom.basis.r_grid.dr, atom.basis.bspl_derivative.at(i) * atom.basis.bspl_derivative.at(j))
+                        + simpson_linear(atom.basis.r_grid.dr, atom.basis.bspl.at(i) * potential * atom.basis.bspl.at(j));
         }
     }
 
     IO::msg::done();
-    return H;
+    return SquareMatrix<double>(H);
 }
 
-auto solve_schrodinger_state(const Atom &atom, int n, int l_number) -> Electron
+auto solve_schrodinger_state(Atom &atom, const int n, const int l_number) -> Electron
 {
     IO::msg::action<int>("Solving", "H-like radial equation", {{"n", n}, {"l", l_number}}, true);
 
@@ -55,14 +54,13 @@ auto solve_schrodinger_state(const Atom &atom, int n, int l_number) -> Electron
 
 
 // Delete?
-auto solve_schrodinger(Atom &atom, int l_number, bool consider_atom_Z) -> void
+auto solve_schrodinger(Atom &atom, const int l_number, const bool consider_atom_Z) -> void
 {
     IO::msg::action<int>("Solving", "H-like radial equation", {{"l", l_number}}, true);
 
     auto Hamiltonian = construct_hamiltonian_matrix(atom, l_number);
 
     auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(Hamiltonian, atom.basis.Bmatrix);
-    
     
     for(int n = l_number + 1; n <= (l_number + 1) + 2; ++n)
     {
@@ -120,7 +118,7 @@ auto greens_perturbation(const Atom &atom, Electron &psi) -> void
     // Compute the expectation value of the Greens interaction, 
     // i.e. <V_gr> = \int_0^\infty |P|^2 V_gr dr.
     IO::msg::action("Solving", "Greens expectation");
-    auto greens_correction = trapz_linear(atom.basis.r_grid.dr, psi.P * psi.P * atom.interaction_potential.get_values());
+    auto greens_correction = trapz_linear(atom.basis.r_grid.dr, psi.P * psi.P * atom.interaction_potential.values);
     IO::msg::done();
 
     // Now compute the e-e perturbative contribution. See Eq. 19 of task sheet.

@@ -2,7 +2,10 @@
 #define SPLINE_BASIS_HPP_
 
 #include <vector>
-#include <limits> // std::numeric_limits<double>::epsilon()
+#include <limits>    // std::numeric_limits<double>::epsilon()
+#include <algorithm> // std::transform
+#include <numeric>   // std::iota
+#include <execution> // std::execution
 
 #include "bspline.hpp"
 #include "grid.hpp"
