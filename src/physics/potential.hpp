@@ -5,7 +5,7 @@
 #include <cmath> //exp
 #include <algorithm> // std::transform
 
-#include "../IO/IO.hpp"
+#include "../io.hpp"
 
 #include "../math/basis/grid.hpp"
 

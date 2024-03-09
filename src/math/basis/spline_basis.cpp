@@ -9,17 +9,17 @@ SplineBasis::SplineBasis(const LinearGrid &r_grid_, int k_spline_, int n_spline_
     bspl_derivative(std::vector<std::vector<double> >(num_spl, std::vector<double>(r_grid.grid_size))),
     Bmatrix(SquareMatrix<double>(num_spl))
 {
-    IO::msg::construct<int>("B-Spline basis", {{"k", k_spline}, {"n", num_spl}}, true);
+    IO::log_params(LogType::info, "Constructing B-Spline basis", {{"k", k_spline}, {"n", num_spl}}, 1);
 
     construct_spline_vectors();
     construct_matrix();
 
-    IO::msg::done(true);
+    IO::done(-1);
 }
 
 auto SplineBasis::construct_spline_vectors() -> void
 {
-    IO::msg::action("Constructing", "basis vectors");
+    IO::log("Constructing basis vectors");
     
     BSpline splines(k_spline, num_spl + 3, r_grid.r0, r_grid.r_max);
 
@@ -35,21 +35,20 @@ auto SplineBasis::construct_spline_vectors() -> void
     }
     
 
-    IO::msg::done();
+    IO::done();
 }
 
 auto SplineBasis::construct_matrix() -> void
 {
-    IO::msg::action("Constructing", "B-matrix");
+    IO::log("Constructing B-matrix");
 
     for(int i = 0; i < num_spl; ++i)
     {
         for(int j = 0; j <= i; ++j)
         {
-            Bmatrix(i,j) = trapz_linear(r_grid.dr, bspl.at(i) * bspl.at(j));
+            Bmatrix(i,j) = simpson_linear(r_grid.dr, bspl.at(i) * bspl.at(j));
         }
     }
 
-
-    IO::msg::done();
+    IO::done();
 }

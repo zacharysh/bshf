@@ -91,41 +91,26 @@ auto Matrix<T>::get_row(std::size_t row) -> std::vector<T>
         result.at(i) = (*this)(row, i);
     return result;
 }
-/*
-template <typename T>
-auto Matrix<T>::transpose() -> Matrix<T>
-{
-    Matrix<T> result(size_y, size_x);
 
-    for (std::size_t i = 0; i < size_x; ++i)
-    {
-        for (std::size_t j = 0; j < size_y; ++j)
-        {
-            result(j,i) = (*this)(i,j);
-        }
-    }
-    return result;
-}
-*/
 
 // uses LAPACK function DYSGV
 // solves problems of the form Av = eBv.
 auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> B) -> std::pair<SquareMatrix<double>, std::vector<double> >
 {
-    IO::msg::action("Calling", "LAPACK subroutine DYSGV");
+    IO::log("Calling LAPACK subroutine DYSGV");
     
-    int itype{ 1 };
-    char jobz{'V'};
-    char uplo{'U'};
+    int  itype { 1 };
+    char jobz  {'V'};
+    char uplo  {'U'};
 
     int N = static_cast<int>(A.get_size());
 
-    std::vector<double> eigenvalues(N);
+    std::vector<double> eigenvalues(A.get_size());
 
     // blank array work of length lwork - memory used by LAPACK. We use the recommended value of lwork.
     int lwork = 6 * N;
     //double *work = new double[lwork];
-    std::vector<double> work(lwork);
+    std::vector<double> work(6 * A.get_size());
 
     // error code. info = 0 if successful.
     int info = 0;
@@ -135,11 +120,11 @@ auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double
     // Best way to do this?
     if (info != 0)
     {
-        IO::msg::error({"INFO", info});
+        IO::log_params(LogType::error, "Error: dysgv_ failed", {{"INFO", info}});
     }
     else
     {
-        IO::msg::done();
+        IO::done();
     }
 
     //delete [] work;

@@ -12,7 +12,7 @@
 
 #include "../matrix.hpp"
 
-#include "../../IO/IO.hpp"
+#include "../../io.hpp"
 
 
 class SplineBasis

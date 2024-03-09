@@ -6,7 +6,7 @@
 #include <numeric> // std::iota
 #include <algorithm> // std::iota, std::transform
 
-#include "../../IO/IO.hpp"
+#include "../../io.hpp"
 
 class LinearGrid
 {
@@ -28,7 +28,7 @@ class LinearGrid
     range(std::vector<double>(grid_size_)),
     range_inv(std::vector<double>(grid_size_))
     {
-        IO::msg::construct<double>("linear grid", {{"r_min", r0_}, {"r_max", r_max_}, {"num_points", grid_size_}});
+        IO::log_params(LogType::info, "Constructing linear grid", {{"r_min", r0_}, {"r_max", r_max_}, {"num_points", grid_size_}});
 
         std::generate(range.begin(), range.end(),
             [n=0, *this] () mutable
@@ -38,11 +38,11 @@ class LinearGrid
         std::transform(range.begin(), range.end(), range_inv.begin(),
             [] (auto r) { return 1.0 / r; });
 
-        IO::msg::done();
+        IO::done();
     };
 
-    auto at(std::size_t i) const -> double { return range.at(i); }
-    
+    inline auto at(std::size_t i) const -> double { return range.at(i); }
+    inline auto inv_at(std::size_t i) const -> double { return range_inv.at(i); }
 };
 
 #endif

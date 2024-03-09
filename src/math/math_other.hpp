@@ -4,16 +4,19 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <cmath>
 
-#include "../IO/IO.hpp"
+#include "../io.hpp"
+
+#include "basis/grid.hpp"
 
 //template <typename T>
 auto trapz_linear(double dr, const std::vector<double> &func) -> double;
 auto simpson_linear(double dr, const std::vector<double> &func) -> double;
 
+auto ykab(const int k, const std::vector<double> &Pa, const std::vector<double> &Pb, const LinearGrid &r_grid) -> std::vector<double>;
 
 //TODO FIX NAMESPACE
-// also. const? or not?
 auto operator*(const std::vector<double> &lhs, const double &rhs)                   -> std::vector<double>;
 auto operator*(const double &lhs, const std::vector<double> &rhs)                   -> std::vector<double>;
 

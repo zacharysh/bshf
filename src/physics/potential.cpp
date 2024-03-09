@@ -15,25 +15,25 @@ Potential::Potential(int Z, Type type_, const LinearGrid &r_grid_)
 
 auto Potential::Coulomb(int Z, const LinearGrid &r_grid) -> std::vector<double>
 {
-    IO::msg::construct<std::string>("potential", {{std::string(), "Coulomb"}});
+    IO::log(LogType::info, "Constructing potential", "Coulomb");
 
     std::vector<double> potential(r_grid.grid_size);
 
     std::transform(r_grid.range_inv.begin(), r_grid.range_inv.end(), potential.begin(),
         [Z](auto r_inv) {return -Z * r_inv;} );
 
-    IO::msg::done();
+    IO::done();
 
-    return potential;
+    return std::vector<double>(potential);
 }
 
 auto Potential::Greens(int Z, const LinearGrid &r_grid) -> std::vector<double>
 {
-    IO::msg::construct<std::string>("potential", {{std::string(), "Green's"}});
+    IO::log(LogType::info, "Constructing potential", "Green's");
 
     // Valid for Lithium.
-    const auto h = 1;
-    const auto d = 0.2;
+    constexpr auto h = 1;
+    constexpr auto d = 0.2;
 
     std::vector<double> potential(r_grid.grid_size);
     
@@ -43,7 +43,7 @@ auto Potential::Greens(int Z, const LinearGrid &r_grid) -> std::vector<double>
             return (Z - 1) * (h_e - h) / (1 + h_e - h) / r;
         });
 
-    IO::msg::done();
+    IO::done();
 
-    return potential;
+    return std::vector<double>(potential);
 }

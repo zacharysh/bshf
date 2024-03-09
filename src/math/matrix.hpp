@@ -9,7 +9,7 @@
 
 #include "math_other.hpp"
 
-#include "../IO/IO.hpp"
+#include "../io.hpp"
 
 // dsygv_ is a symbol in the LAPACK library files.
 // Documentation: http://www.netlib.org/lapack/explore-html/index.html
@@ -20,7 +20,7 @@ extern "C"
             double *W, double *WORK , int *LWORK,  int *INFO);
 }
 
-template <typename T>
+template <typename T = double>
 class Matrix
 {
     public:

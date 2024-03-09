@@ -15,7 +15,7 @@
 #include "math/basis/spline_basis.hpp"
 #include "math/basis/grid.hpp"
 
-#include "IO/io.hpp"
+#include "io.hpp"
 
 #include "physics/wavefunction.hpp"
 #include "physics/atom.hpp"
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     
     if (argc == 1)
     {
-        IO::msg::error_msg("No input arguments. Aborting");
+        IO::log(LogType::error, "No input arguments. Aborting");
         return EXIT_FAILURE;
     }
     
@@ -36,7 +36,6 @@ int main(int argc, char **argv)
     Potential::Type nuclear_potential = Potential::Type::Unknown;
     Potential::Type interaction_type = Potential::Type::Unknown;
 
-    std::vector<int> l_vector {};
 
     // std::size_t ?
     int N_grid_size = 0;
@@ -51,116 +50,77 @@ int main(int argc, char **argv)
     for (int i = 1; i < argc; ++i)
     {
         // Next input parameter.
-        std::string param{argv[i]};
+        std::string param = argv[i];
+        std::string next_arg;
+        if (argv[i+1])
+            next_arg = argv[i+1];
+        else break;
         
 
-        if (param == "-Z" && argc > i)
+        if (param == "-Z")
         {
-            Z = std::stoi(argv[i+1]);
+            Z = std::stoi(next_arg);
         }
-        if ((param == "-L" || param == "-l") && argc > i)
+        else if ((param == "--excited-valence"))
         {
-            std::stringstream next_arg_ss(argv[i+1]);
-
-            std::string token;
-            while(getline(next_arg_ss, token, ' '))
-            {
-                if(std::isdigit(token[0]))
-                    l_vector.push_back(std::stoi(token));
-            }
+            if(next_arg == "2p") {excited_valence_data = {2, 1}; excited_valence = true; }
         }
-
-        if ((param == "--excited-valence") && argc > i)
-        {
-            // Fix me.
-            std::string state_arg(argv[i+1]);
-            if(state_arg == "2p") {excited_valence_data = {2, 1}; excited_valence = true; }
-            //else if(state_arg == "2s") {excited_valence_data = {2, 0}; excited_valence = true; fill_atom == false; }
-        }
-                
-        // Get rid of this?
         else if ((param == "--nuclear-potential" || param == "-np") && argc > i)
         {
-            std::string next_arg(argv[i+1]);
-
             // tolower?
             if(next_arg == "coulomb" || next_arg == "Coulomb")
                 nuclear_potential = Potential::Type::Coulomb;
             else
             {
-                std::cout << "Invalid nuclear potential '" << next_arg << "' given.\n";
+                IO::log(LogType::error, "Invalid nuclear potential given.", next_arg);
                 return EXIT_FAILURE;
             }
         }
-
-        else if ((param == "--interaction-potential"|| param == "-ip") && argc > i)
+        else if ((param == "--interaction-potential"|| param == "-ip"))
         {
-            std::string next_arg(argv[i+1]);
-
-            // tolower?
             if(next_arg == "greens" || next_arg == "Greens")
                 interaction_type = Potential::Type::Greens;
-            else if(next_arg == "self-consistent-hartree-fock" || next_arg == "Self-Consistent-Hartree-Fock" || next_arg == "SCHF")
+            else if(next_arg == "self-consistent-hartree" || next_arg == "Self-Consistent-Hartree" || next_arg == "SCH")
             {
                 interaction_type = Potential::Type::HF_Direct;
             }
-            else if(next_arg == "hartree-fock" || next_arg == "Hartree-Fock")
+            else if(next_arg == "hartree-fock" || next_arg == "Hartree-Fock" || next_arg == "HF")
             {
                 interaction_type = Potential::Type::HartreeFock;
             }
             else
             {
-                std::cout << "Invalid nuclear potential '" << next_arg << "' given.\n";
+                IO::log(LogType::error, "Invalid interaction potential given.", next_arg);
                 return EXIT_FAILURE;
             }
         }
 
-        else if ((param == "--grid-size") && argc > i)
-        {
-            //std::istringstream next_arg_ss(argv[i+1]);
-            //next_arg_ss >> N_grid_points;
-            N_grid_size = std::stoi(argv[i+1]);
-        }
-        else if ((param == "--fill-atom"))
-        {
-            fill_atom = true;
-        }
-        else if ((param == "--generate-spectrum"))
-        {
-            gen_spectrum = true;
-            fill_atom = false;
-        }
+        else if ((param == "--grid-size"))
+            N_grid_size = std::stoi(next_arg);
+        
         else if ((param == "--calc-lifetime" || param == "--calculate-lifetime"))
-        {
             calc_lifetime = true;
-        }
     }
 
     if(nuclear_potential == Potential::Type::Unknown)
     {
-        IO::msg::warning_msg("No potential given, defaulting to Coulomb");
+        IO::log(LogType::warn,"No potential given, defaulting to Coulomb");
         nuclear_potential = Potential::Type::Coulomb;
     }
     if(interaction_type == Potential::Type::Unknown)
     {
-        IO::msg::warning_msg("No interaction potential specified. Ignoring");
+        IO::log(LogType::warn,"No interaction potential specified. Ignoring");
     }
     if(N_grid_size == 0)
     {
-        IO::msg::warning_msg("No grid size specified. Using default");
-        N_grid_size = 30001;
-    }
-    if(l_vector.empty() && gen_spectrum == true)
-    {
-        IO::msg::error_msg("No l number given");
-        return EXIT_FAILURE;
+        N_grid_size = 10001;
+        IO::log_params(LogType::warn, "No grid size specified. Using default", {{"n", N_grid_size}});
     }
     
-    
-    const double r0 = 1.0e-5;
-    const double rmax = 20.0;
-    const int k_spline = 7;
-    const int n_spline = 60;
+    constexpr auto r0 = 5.0e-6;
+    constexpr auto rmax = 20.0;
+    constexpr auto k_spline = 7;
+    constexpr auto n_spline = 90;
     
 
     SplineBasis basis {LinearGrid(r0, rmax, N_grid_size), k_spline, n_spline};
@@ -173,16 +133,17 @@ int main(int argc, char **argv)
         case Potential::Type::Unknown:
         {
             solve_atom(atomic_system);
+            IO::done(-1);
 
             if(excited_valence)
                 solve_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
-            
             break;
         }
         case Potential::Type::Greens:
         {
             solve_atom(atomic_system);
             greens_perturbation(atomic_system, atomic_system.electrons.back());
+            IO::done(-1);
 
             if(excited_valence)
             {
@@ -195,6 +156,7 @@ int main(int argc, char **argv)
         case Potential::Type::HF_Direct:
         {
             HartreeFock::solve_self_consistent(atomic_system);
+            IO::done(-1);
             
             if(excited_valence)
             {
@@ -205,11 +167,11 @@ int main(int argc, char **argv)
         case Potential::Type::HartreeFock:
         {
             HartreeFock::solve(atomic_system);
+            IO::done(-1);
 
             if(excited_valence)
             {
                 HartreeFock::solve_full_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
-                //HartreeFock::solve_excited_valence(atomic_system, excited_valence_data.first, excited_valence_data.second);
             }
                 
             break;
@@ -218,7 +180,7 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
     }
 
-    print_states(atomic_system.electrons);
+    atomic_system.print_states();
 
     const double expt_2p_energy = -0.13023;
     const double expt_2p_lifetime = 27.102; // ns
@@ -229,7 +191,7 @@ int main(int argc, char **argv)
         auto predicted_2p_lifetime = calculate_lifetime(atomic_system.electrons.at(1), atomic_system.electrons.at(2), atomic_system.basis.r_grid);
         predicted_2p_lifetime *= 10e8;
         
-        std::cout   << "\n2p energy: " << atomic_system.electrons.back().energy << "au (expt. " << expt_2p_energy << "au, "
+        std::cout   << "\n2p energy: " << atomic_system.valence().energy << "au (expt. " << expt_2p_energy << "au, "
                     << abs(abs(atomic_system.electrons.back().energy) - abs(expt_2p_energy)) / abs(expt_2p_energy) * 100.0
                     << "% error).";
 
@@ -237,7 +199,6 @@ int main(int argc, char **argv)
                     << abs(abs(predicted_2p_lifetime) - abs(expt_2p_lifetime)) / abs(expt_2p_lifetime) * 100.0
                     << "% error).\n";
     }
-    
     std::ofstream ofs;
     ofs.open("output/Li.txt", std::ofstream::out | std::ofstream::trunc);
 

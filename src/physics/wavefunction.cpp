@@ -1,11 +1,10 @@
 #include "wavefunction.hpp"
 
-Electron::Electron(const int n_, const int l_, const int m_, const double energy_, const std::vector<double> &coeffs_, const SplineBasis &basis_)
-: n(n_), l(l_), m(m_),// spin_up(spin_up_),
+Electron::Electron(const int n_, const int l_, const double energy_, const std::vector<double> &coeffs_, const SplineBasis &basis_)
+: n(n_), l(l_),
 state_label(std::to_string(n)),
 energy(energy_),
-coeffs(coeffs_),
-basis_size(coeffs.size()),
+basis_size(coeffs_.size()),
 P(std::vector<double>(basis_.grid_size())),
 amplitude(std::vector<double>(basis_.grid_size()))
 {
@@ -14,32 +13,24 @@ amplitude(std::vector<double>(basis_.grid_size()))
         state_label += "s";
     else if( l == 1)
         state_label += "p";
-    else if( l == 2)
-        state_label += "d";
         
-    //IO::msg::construct<int>("electron state", {{"n", n_}, {"l", l_}, {"m", m_}});
-    IO::msg::construct<std::string>("electron state", {{std::string(), state_label}});
+    IO::log(LogType::info, "Constructing electron state", state_label);
 
-    P = std::inner_product(basis_.bspl.begin(), basis_.bspl.end(), coeffs.begin(), P,
+    // Multiply the basis vectors by the correct weighting.
+    // Removes need for multiple for-loops.
+    P = std::inner_product(basis_.bspl.begin(), basis_.bspl.end(), coeffs_.begin(), P,
         [] (auto a, auto b) {return a + b;}, [] (auto &b, auto &c) {return b * c;});
 
-    amplitude = P;
+    amplitude = P * basis_.r_grid.range_inv;
 
-    std::transform(basis_.r_grid.range_inv.begin(), basis_.r_grid.range_inv.end(), amplitude.begin(), amplitude.begin(),
-            [] (auto r_inv, auto P) { return P * r_inv; });
-
-    r1_moment = calculate_radial_moment(basis_.r_grid, 1);
-    r2_moment = calculate_radial_moment(basis_.r_grid, 2);
-
-    IO::msg::print_values<double>({{"\u222Bdr|P(r)|\u00B2", simpson_linear(basis_.r_grid.dr, P * P)}});
-
+    //r1_moment = calculate_radial_moment(basis_.r_grid, 1);
+    //r2_moment = calculate_radial_moment(basis_.r_grid, 2);
     
-    IO::msg::done();
+    IO::done();
 }
 
-auto Electron::calculate_radial_moment(const LinearGrid &r_grid, int k) -> double
+auto Electron::calculate_radial_moment(const LinearGrid &r_grid, int k) const -> double
 {   
-
     auto r_k = r_grid.range;
 
     // better way?
@@ -50,93 +41,16 @@ auto Electron::calculate_radial_moment(const LinearGrid &r_grid, int k) -> doubl
 }
 
 // We assume a is the only empty state and b is the excited state.
-auto calculate_lifetime(Electron a, Electron b, const LinearGrid &r_grid) -> double
+auto calculate_lifetime(const Electron &a, const Electron &b, const LinearGrid &r_grid) -> double
 {   
     // Use experimental omega.
-    const auto omega = 0.06791;
+    constexpr auto omega_3 = 0.06791 * 0.06791 * 0.06791;
 
     assert((a.l == 0 && b.l == 1 && a.n == 2 && b.n == 2) && "Only works for 2p -> 2s transition currently.");
 
     auto Rab = simpson_linear(r_grid.dr, a.P * r_grid.range * b.P);
 
-    auto gamma = 2.0 * Rab * Rab * omega * omega * omega / 3.0 * 1.071e10;
-    //auto gamma = 2.0 * pow(Rab, 2) * pow(omega, 3) / 3.0 * 1.071e10;
+    auto gamma = 2.0 * Rab * Rab * omega_3 / 3.0 * 1.071e10;
 
     return 1/gamma;
-}
-
-auto print_states(std::vector<Electron> states) -> void
-{
-    // TODO: Perhaps we wish to include the normalisation?
-    //\u222Bdr|P(r)|\u00B2
-
-    const std::string epsilon("\u03B5");
-    const std::string delta("\u0394");
-
-    // Check if we will have to eventually print columns for energy correction.
-    bool print_perturbation = false;
-    for (auto iter : states)
-        if(iter.has_correction == true) { print_perturbation = true; };
-    
-    // Construct title.
-    std::cout << "\n\033[0;36mResults:\033[0;0m\n\n";
-    
-    // Construct headings.
-    printf(" %7s %14s %14s", "State", (epsilon + " (au)").c_str(), (epsilon + " (eV)").c_str());
-
-    if(print_perturbation == true)
-    {
-        printf(" %15s %15s", (delta + epsilon + " (au)").c_str(), (delta + epsilon + " (eV)").c_str());
-        printf(" %16s %16s", (epsilon + "+" + delta + epsilon + " (au)").c_str(), (epsilon + "+" + delta + epsilon + " (eV)").c_str());
-    }
-
-    printf(" %13s  %13s", "<r> (a0)", "<r\u00B2> (a0)");
-    std::cout << "\n";
-
-    // Bad name...
-    bool excited_state_present = false;
-    for (const auto &psi : states)
-    {
-        // First, print the state label.
-        print_state_label(psi, excited_state_present);
-        
-        printf(" %13.5f %13.5f", psi.energy, PhysicalConstants::Eh_to_eV(psi.energy));
-
-        if(print_perturbation == true)
-        {
-            printf(" %13.5f %13.5f", psi.energy_correction, PhysicalConstants::Eh_to_eV(psi.energy_correction));
-            printf(" %13.5f %13.5f", psi.energy + psi.energy_correction, PhysicalConstants::Eh_to_eV(psi.energy + psi.energy_correction));
-        }
-        printf(" %13.5f %13.5f\n", psi.r1_moment, psi.r2_moment);
-    }
-    std::cout   << (excited_state_present ? "\nKey: '\033[0;96m*\033[0;0m' indicates excited state; '\033[0;33m-\033[0;0m' indicates unfilled state."  : "")
-                << (print_perturbation ? ("\nN.B. " + epsilon + " is the unperturbed energy V = V_c + V_Gr. " + delta + epsilon + " is the first-order perturbative correction.") : "")
-                << "\n";
-}
-
-// Is there a better way to do this?
-inline
-auto print_state_label(const Electron &psi, bool &excited_state_present) -> void
-{
-    auto label = psi.state_label;
-
-
-    if(psi.filled == false)
-        {
-            std::cout << "\033[0;33m";
-            label = "-" + label;
-            printf(" %7s", label.c_str());
-            std::cout << "\033[0;0m";
-
-            excited_state_present = true;
-        }
-        else if(excited_state_present == true)
-        {
-            std::cout << "\033[0;96m";
-            label = "*" + label;
-            printf(" %7s", label.c_str());
-            std::cout << "\033[0;0m";
-        }
-        else
-            printf(" %7s", label.c_str());
 }
