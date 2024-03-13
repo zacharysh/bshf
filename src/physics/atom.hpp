@@ -40,8 +40,6 @@ class Atom
     interaction_potential(Potential(Z, interaction_type_, basis.r_grid)),
     kinetic(basis.num_spl)
     {
-        IO::log_params(LogType::info, "Constructing atom", {{"Z", Z_}}, 1);
-
         // Compute the kinetic term once, since we don't need to redo it each time.
         // Only need to fill the bottom half since DSYGV_ anticipates a guaranteed symmetric-definite matrix.
         #pragma omp parallel for

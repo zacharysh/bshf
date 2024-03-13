@@ -41,7 +41,7 @@ class Electron
 
     Electron(const int n_, const int l_, const double energy_, const std::vector<double> &coeffs_, const SplineBasis &basis);
 
-    // < r ^ k >
+    // i.e., < r^k >
     auto calculate_radial_moment(const LinearGrid &r_grid, int k) const -> double;
 };
 

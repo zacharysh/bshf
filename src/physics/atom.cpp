@@ -27,8 +27,6 @@ auto print_state_label(const Electron &psi, bool excited_state_present) -> void
 
 auto Atom::print_states() const -> void
 {
-    // Perhaps we wish to include the normalisation?
-    
     const std::string integral("\u222Bdr|P(r)|\u00B2");
     const std::string epsilon("\u03B5");
     const std::string delta("\u0394");
@@ -39,10 +37,16 @@ auto Atom::print_states() const -> void
         if(iter.has_correction == true) { print_perturbation = true; break; };
     
     // Construct title.
-    std::cout << "\n\033[0;36mResults:\033[0;0m\n\n";
-    
+    std::cout << "\nResults:\n";
+    //std::cout << "\n\033[0;36mResults:\033[0;0m\n";
+
+    auto row_length = 82 + (print_perturbation ? 56 : 0);
+
+    for(auto i = 0; i < row_length; ++i)
+        std::cout << "=";
+
     // Construct headings.
-    printf(" %7s %14s %14s", "State", (epsilon + " (au)").c_str(), (epsilon + " (eV)").c_str());
+    printf("\n %7s %14s %14s", "State", (epsilon + " (au)").c_str(), (epsilon + " (eV)").c_str());
 
     if(print_perturbation == true)
     {
@@ -74,6 +78,8 @@ auto Atom::print_states() const -> void
         // Print radial moments
         printf(" %13.5f %13.5f %13.5f\n", psi.calculate_radial_moment(basis.r_grid, 1), psi.calculate_radial_moment(basis.r_grid, 2), simpson_linear(basis.r_grid.dr, psi.P * psi.P));
     }
+    for(auto i = 0; i < row_length; ++i)
+        std::cout << "=";
     std::cout   << (excited_state_present ? "\nKey: '\033[0;96m*\033[0;0m' indicates excited state; '\033[0;33m-\033[0;0m' indicates unfilled state."  : "")
                 << (print_perturbation ? ("\nN.B. " + epsilon + " is the unperturbed energy V = V_c + V_Gr. " + delta + epsilon + " is the first-order perturbative correction.") : "")
                 << "\n";

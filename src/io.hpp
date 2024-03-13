@@ -113,9 +113,9 @@ auto log(LogType msg_type, const std::string &msg, const std::string &info, int 
     switch(msg_type)
     {
         default: break;
-        case LogType::info:  { std::cout  << " (" << BLUE   << info << CLEAR << ")";   break;};
-        case LogType::warn:  { std::cout  << " (" << YELLOW << info << CLEAR << ")";   break;};
-        case LogType::error: { std::cout  << " (" << RED    << info << CLEAR << ")";   break;};
+        case LogType::info:  { std::cout  << BLUE   << " (" << info << ")." << CLEAR;   break;};
+        case LogType::warn:  { std::cout  << YELLOW << " (" << info << ")." << CLEAR;   break;};
+        case LogType::error: { std::cout  << RED    << " (" << info << ")." << CLEAR;   break;};
     }
 
     if(msg_type != LogType::done && msg_type != LogType::warn && msg_type != LogType::error)
@@ -126,7 +126,7 @@ auto log(LogType msg_type, const std::string &msg, const std::string &info, int 
         std::cout << "... ";
     }
     else
-        std::cout << ".\n";
+        std::cout << "\n";
 }
 
 

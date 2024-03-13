@@ -2,29 +2,23 @@
 
 #include <vector>
 
-#include <cmath> // sqrt
-
-#include <fstream>
+#include <cmath> // std::sqrt, std::cbrt
 
 #include <string> // std::string, std::stoi
-#include <sstream> // std::string, std::stoi
 
 #include <chrono> // std::chrono::high_resolution_clock
 
-
 #include "io.hpp"
 
-#include "math/matrix.hpp"
-#include "math/math_other.hpp"
-
-#include "math/basis/spline_basis.hpp"
 #include "math/basis/grid.hpp"
+#include "math/basis/spline_basis.hpp"
 
-#include "physics/wavefunction.hpp"
+#include "physics/potential.hpp"
 #include "physics/atom.hpp"
+#include "physics/wavefunction.hpp"
+
 #include "physics/solve/solve.hpp"
 #include "physics/solve/hartree_fock.hpp"
-#include "physics/potential.hpp"
 
 int main(int argc, char **argv)
 {
@@ -43,6 +37,7 @@ int main(int argc, char **argv)
     Potential::Type nuclear_potential = Potential::Type::Unknown;
     Potential::Type interaction_type = Potential::Type::Unknown;
 
+    auto io_verbosity = false;
 
     bool calc_lifetime = false;
     std::pair<int, int> excited_valence_data {};
@@ -73,6 +68,8 @@ int main(int argc, char **argv)
 
         if (argv[i+1])
             next_arg = argv[i+1];
+        else
+            continue;
         
         if (param == "-Z")
         {
@@ -90,13 +87,13 @@ int main(int argc, char **argv)
         }
         else if (param == "--interaction-potential"|| param == "-ip")
         {
-            if(next_arg == "greens" || next_arg == "Greens")
+            if(next_arg == "greens")
                 interaction_type = Potential::Type::Greens;
-            else if(next_arg == "self-consistent-hartree" || next_arg == "Self-Consistent-Hartree" || next_arg == "SCH")
+            else if(next_arg == "self-consistent-hartree" || next_arg == "hartree" || next_arg == "SCH")
             {
                 interaction_type = Potential::Type::HF_Direct;
             }
-            else if(next_arg == "hartree-fock" || next_arg == "Hartree-Fock" || next_arg == "HF")
+            else if(next_arg == "hartree-fock" || next_arg == "HF")
             {
                 interaction_type = Potential::Type::HartreeFock;
             }
@@ -106,21 +103,21 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
             }
         }
-        else if (param == "-v" || param == "--verbose")
+        else if (param == "-v" || param == "--verbose" && !next_arg.empty())
         {
             if(next_arg == "false")
-                IO::verbose = false;
+                IO::verbose = io_verbosity;
             else if (next_arg != "true")
             {
                 IO::log(LogType::error, "Invalid argument", next_arg);
                 return EXIT_FAILURE;
             }
         }
-        else if (param == "--print" || param == "--print-to-disc")
+        else if (param == "--print" || param == "--print-to-disc" && !next_arg.empty())
         {
-            if(next_arg == "false")
-                IO::print_results = false;
-            else if (next_arg != "true")
+            if(next_arg == "true")
+                IO::print_results = true;
+            else if (next_arg != "false")
             {
                 IO::log(LogType::error, "Invalid argument", next_arg);
                 return EXIT_FAILURE;
@@ -134,19 +131,19 @@ int main(int argc, char **argv)
             l_max_state = std::stoi(next_arg);
     }
 
+    if(N_grid_size == 2501) 
+        IO::log_params(LogType::warn, "No grid size specified. Using default", {{"n", N_grid_size}});
+
     if(nuclear_potential == Potential::Type::Unknown)
     {
         IO::log(LogType::warn,"No potential given, defaulting to Coulomb");
         nuclear_potential = Potential::Type::Coulomb;
     }
     if(interaction_type == Potential::Type::Unknown)
-    {
-        IO::log(LogType::warn,"No interaction potential specified. Ignoring");
-    }
-    if(N_grid_size == 2501) 
-    {
-        IO::log_params(LogType::warn, "No grid size specified. Using default", {{"n", N_grid_size}});
-    }
+        IO::log(LogType::warn,"No interaction potential specified. Solving H-Like system");
+    
+
+    IO::verbose = io_verbosity;
 
     // When solving Hartree-Fock method, we require higher precision near the origin for our 1s orbitals, so take cbrt so there is less
     // numerical error for r << 1 at the cost of decreased relative precision for r >> 1.
@@ -156,10 +153,11 @@ int main(int argc, char **argv)
         ? std::cbrt(std::numeric_limits<double>::epsilon()) : std::sqrt(std::numeric_limits<double>::epsilon());
 
     
+
     SplineBasis basis {LinearGrid {r0, rmax, N_grid_size}, k_spline, n_spline, machine_eps};
     Atom        atom  {Z, n_max_state, l_max_state, nuclear_potential, interaction_type, basis};
     
-    // Best way to do this?
+    IO::log_params(LogType::info, "Constructing atom", {{"Z", Z}}, 1);
     switch (interaction_type)
     {
         case Potential::Type::Unknown:      
@@ -168,18 +166,19 @@ int main(int argc, char **argv)
         case Potential::Type::HF_Direct:    
         case Potential::Type::HartreeFock:  { HartreeFock::solve(atom); break; }
 
-        case Potential::Type::Coulomb:      {std::cerr << "How did this even occur!?"; return EXIT_FAILURE; }
+        case Potential::Type::Coulomb:      { std::cerr << "How did this even occur!?"; return EXIT_FAILURE; }
     }
 
-    IO::done(-1);
     if(calc_lifetime)
         solve_excited_valence(atom, excited_valence_data.first, excited_valence_data.second);
+    
+    IO::done(-1);
 
 
     atom.print_states();
 
-    std::cout << "\n";
 
+    // Entirely for Lithium 2p -> 2s lifetime. See 4070 task sheet.
     if(calc_lifetime)
     {
         constexpr auto expt_2p_energy = -0.13023; // au
@@ -188,20 +187,20 @@ int main(int argc, char **argv)
         auto predicted_2p_lifetime = calculate_lifetime(atom.electrons.at(1), atom.valence(), atom.basis.r_grid);
         predicted_2p_lifetime *= 1e9;
         
-        std::cout   << "2p energy: " << atom.valence().energy << "au (expt. " << expt_2p_energy << "au, "
+        std::cout   << "\n2p energy: " << atom.valence().energy << "au (expt. " << expt_2p_energy << "au, "
                     << abs(abs(atom.valence().energy) - abs(expt_2p_energy)) / abs(expt_2p_energy) * 100.0
-                    << "% error).\n";
+                    << "% error).";
         
         if(interaction_type == Potential::Type::Greens)
         {
             auto corrected_energy = atom.valence().energy + atom.valence().energy_correction;
 
-            std::cout   << "2p energy (w/ pert.): " << corrected_energy  << "au (expt. " << expt_2p_energy << "au, "
+            std::cout   << "\n2p energy (w/ pert.): " << corrected_energy  << "au (expt. " << expt_2p_energy << "au, "
                         << abs(abs(corrected_energy) - abs(expt_2p_energy)) / abs(expt_2p_energy) * 100.0
                         << "% error).\n";
         }
 
-        std::cout   << "2p lifetime: " << predicted_2p_lifetime << "ns (expt. " << expt_2p_lifetime << "ns, "
+        std::cout   << "\n2p lifetime: " << predicted_2p_lifetime << "ns (expt. " << expt_2p_lifetime << "ns, "
                     << abs(abs(predicted_2p_lifetime) - abs(expt_2p_lifetime)) / abs(expt_2p_lifetime) * 100.0
                     << "% error).\n";
     }
@@ -235,11 +234,10 @@ int main(int argc, char **argv)
     }
 
 
-
     // Finished.
     auto t_end = std::chrono::high_resolution_clock::now();
 
-    std::cout   << "Finished. Total time elapsed = "
+    std::cout   << "\nFinished. Total time elapsed = "
                 << std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count() << "ms.\n";
 
     return EXIT_SUCCESS;
