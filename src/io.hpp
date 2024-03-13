@@ -25,152 +25,153 @@ enum class LogType
 
 namespace IO
 {
-    inline int  depth    = 0;
-    inline bool verbose  = true;//false;
 
-    inline bool print_results = true;//false;
+inline int  depth    = 0;
+inline bool verbose  = true;
 
-    inline
-    auto log(const std::string &msg, int delta_depth = 0) -> void
+inline bool print_results = false;
+
+inline
+auto log(const std::string &msg, int delta_depth = 0) -> void
+{
+    if(!verbose)
+        return;
+
+    for (int i = 0; i < depth; ++i)
+        std::cout << "  ";
+
+    std::cout << "> " << msg;
+
+    depth += delta_depth;
+
+    
+    if(delta_depth > 0)
+        std::cout << ":\n";
+    else
+        std::cout << "... ";
+}
+
+inline
+auto log(LogType msg_type, const std::string &msg, int delta_depth = 0) -> void
+{
+    if(!verbose)
+        return;
+
+    if(msg_type != LogType::done || (msg_type == LogType::done && delta_depth < 0))
     {
-        if(!verbose)
-            return;
+    for (int i = 0; i < depth; ++i)
+        std::cout << "  ";
 
-        for (int i = 0; i < depth; ++i)
-            std::cout << "  ";
-
-        std::cout << "> " << msg;
-
-        depth += delta_depth;
-
-        
-        if(delta_depth > 0)
-            std::cout << ":\n";
-        else
-            std::cout << "... ";
+    std::cout << "> ";
     }
 
-    inline
-    auto log(LogType msg_type, const std::string &msg, int delta_depth = 0) -> void
+    depth += delta_depth;
+
+    switch(msg_type)
     {
-        if(!verbose)
-            return;
-
-        if(msg_type != LogType::done || (msg_type == LogType::done && delta_depth < 0))
-        {
-        for (int i = 0; i < depth; ++i)
-            std::cout << "  ";
-
-        std::cout << "> ";
-        }
-
-        depth += delta_depth;
-
-        switch(msg_type)
-        {
-            case LogType::text:  { std::cout                           << msg;             break;};
-            case LogType::info:  { std::cout  << BLUE                  << msg << CLEAR;    break;};
-            case LogType::warn:  { std::cout  << YELLOW << "Warning: " << msg << CLEAR;    break;};
-            case LogType::error: { std::cout  << RED    << "Error: "   << msg << CLEAR;    break;};
-            case LogType::done:  { std::cout  << GREEN                 << msg << CLEAR;    break;};
-        }
-        
-        if(msg_type != LogType::done && msg_type != LogType::warn && msg_type != LogType::error)
-        {
-            if(delta_depth > 0)
-                std::cout << ":\n";
-            else
-                std::cout << "... ";
-        }
-        else
-            std::cout << ".\n";
-    }
-
-    inline
-    auto log(LogType msg_type, const std::string &msg, const std::string &info, int delta_depth = 0) -> void
-    {
-        if(!verbose)
-            return;
-
-
-        if(msg_type != LogType::done)
-        {
-        for (int i = 0; i < depth; ++i)
-            std::cout << "  ";
-
-        std::cout << "> ";
-        }
-
-        depth += delta_depth;
-
-        switch(msg_type)
-        {
-            default:             { std::cout                           << msg;             break;};
-            case LogType::warn:  { std::cout  << YELLOW << "Warning: " << msg << CLEAR;    break;};
-            case LogType::error: { std::cout  << RED    << "Error: "   << msg << CLEAR;    break;};
-        }
-        switch(msg_type)
-        {
-            default: break;
-            case LogType::info:  { std::cout  << " (" << BLUE   << info << CLEAR << ")";   break;};
-            case LogType::warn:  { std::cout  << " (" << YELLOW << info << CLEAR << ")";   break;};
-            case LogType::error: { std::cout  << " (" << RED    << info << CLEAR << ")";   break;};
-        }
-
-        if(msg_type != LogType::done && msg_type != LogType::warn && msg_type != LogType::error)
-        {
-        if(delta_depth > 0)
-            std::cout << ":\n";
-        else
-            std::cout << "... ";
-        }
-        else
-            std::cout << ".\n";
-    }
-
-
-    template <typename T = int>
-    inline
-    auto log_params(LogType msg_type, std::string msg, const std::initializer_list<T> &params, int delta_depth = 0) -> void
-    {
-        std::stringstream text {""};
-
-        for (const auto &iter : params)
-        {
-            text << iter;
-
-            if(iter != *(params.end()-1))
-                text << ", ";
-        }
-        
-        text << "";
-
-        log(msg_type, msg, text.str(), delta_depth);
+        case LogType::text:  { std::cout                           << msg;             break;};
+        case LogType::info:  { std::cout  << BLUE                  << msg << CLEAR;    break;};
+        case LogType::warn:  { std::cout  << YELLOW << "Warning: " << msg << CLEAR;    break;};
+        case LogType::error: { std::cout  << RED    << "Error: "   << msg << CLEAR;    break;};
+        case LogType::done:  { std::cout  << GREEN                 << msg << CLEAR;    break;};
     }
     
-    template <typename T = int> 
-    inline
-    auto log_params(LogType msg_type, std::string msg, const std::initializer_list<std::pair<std::string, T> > &params, int delta_depth = 0) -> void
+    if(msg_type != LogType::done && msg_type != LogType::warn && msg_type != LogType::error)
     {
-        std::stringstream text {""};
+        if(delta_depth > 0)
+            std::cout << ":\n";
+        else
+            std::cout << "... ";
+    }
+    else
+        std::cout << ".\n";
+}
 
-        for (const std::pair<std::string, T> iter : params)
-        {
-            text << iter.first << " = " << iter.second;
+inline
+auto log(LogType msg_type, const std::string &msg, const std::string &info, int delta_depth = 0) -> void
+{
+    if(!verbose)
+        return;
 
-            if(iter != *(params.end()-1))
-                text << ", ";
-        }
-        
-        log(msg_type, msg, text.str(), delta_depth);
+
+    if(msg_type != LogType::done)
+    {
+    for (int i = 0; i < depth; ++i)
+        std::cout << "  ";
+
+    std::cout << "> ";
     }
 
-    inline
-    auto done(int delta_depth = 0) -> void
+    depth += delta_depth;
+
+    switch(msg_type)
     {
-        if(delta_depth < 0) log(LogType::done, "Done", delta_depth);
-        else                log(LogType::done, "done", delta_depth);
+        default:             { std::cout                           << msg;             break;};
+        case LogType::warn:  { std::cout  << YELLOW << "Warning: " << msg << CLEAR;    break;};
+        case LogType::error: { std::cout  << RED    << "Error: "   << msg << CLEAR;    break;};
     }
+    switch(msg_type)
+    {
+        default: break;
+        case LogType::info:  { std::cout  << " (" << BLUE   << info << CLEAR << ")";   break;};
+        case LogType::warn:  { std::cout  << " (" << YELLOW << info << CLEAR << ")";   break;};
+        case LogType::error: { std::cout  << " (" << RED    << info << CLEAR << ")";   break;};
+    }
+
+    if(msg_type != LogType::done && msg_type != LogType::warn && msg_type != LogType::error)
+    {
+    if(delta_depth > 0)
+        std::cout << ":\n";
+    else
+        std::cout << "... ";
+    }
+    else
+        std::cout << ".\n";
+}
+
+
+template <typename T = int>
+inline
+auto log_params(LogType msg_type, std::string msg, const std::initializer_list<T> &params, int delta_depth = 0) -> void
+{
+    std::stringstream text {""};
+
+    for (const auto &iter : params)
+    {
+        text << iter;
+
+        if(iter != *(params.end()-1))
+            text << ", ";
+    }
+    
+    text << "";
+
+    log(msg_type, msg, text.str(), delta_depth);
+}
+    
+template <typename T = int> 
+inline
+auto log_params(LogType msg_type, std::string msg, const std::initializer_list<std::pair<std::string, T> > &params, int delta_depth = 0) -> void
+{
+    std::stringstream text {""};
+
+    for (const std::pair<std::string, T> iter : params)
+    {
+        text << iter.first << " = " << iter.second;
+
+        if(iter != *(params.end()-1))
+            text << ", ";
+    }
+    
+    log(msg_type, msg, text.str(), delta_depth);
+}
+
+inline
+auto done(const int delta_depth = 0) -> void
+{
+    if(delta_depth < 0) log(LogType::done, "Done", delta_depth);
+    else                log(LogType::done, "done", delta_depth);
+}
 
 auto print_to_file(std::string file_name, std::vector<std::pair<std::string, std::vector<double>>> &values) -> void;
 

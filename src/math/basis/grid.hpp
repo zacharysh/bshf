@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <numeric> // std::iota
-#include <algorithm> // std::iota, std::transform
+#include <algorithm> // std::transform
 
 #include "../../io.hpp"
 

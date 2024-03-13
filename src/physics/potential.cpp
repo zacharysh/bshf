@@ -1,15 +1,14 @@
 #include "potential.hpp"
 
-// This must be fixed ASAP!
 Potential::Potential(int Z, Type type_, const LinearGrid &r_grid_)
 : type(type_), values()
 {
     switch(type_)
     {
-        case Type::Coulomb: { values = {Coulomb(Z, r_grid_)}; break; }
-        case Type::Greens:  { values = {Greens(Z, r_grid_)};  break; }
-        case Type::Unknown:
-        default:            { values = {}; break; }
+        case Type::Coulomb: { values = {Coulomb(Z, r_grid_)};                    break; }
+        case Type::Greens:  { values = {Greens(Z, r_grid_)};                     break; }
+        case Type::Unknown: { values = {std::vector<double>(r_grid_.grid_size)}; break; }
+        default:            { values = {};                                       break; }
     }
 }
 

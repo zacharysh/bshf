@@ -31,7 +31,11 @@ class Atom
     std::vector<Electron> electrons {};
 
     Atom(int Z_, int n_max_, int l_max_, Potential::Type nuclear_potential_type_, Potential::Type interaction_type_, const SplineBasis &basis_)
-    : Z(Z_), n_max(n_max_), l_max(l_max_), basis(basis_),
+    : 
+    Z(Z_), 
+    n_max(n_max_),
+    l_max(l_max_),
+    basis(basis_),
     nuclear_potential(Potential(Z, nuclear_potential_type_, basis.r_grid)),
     interaction_potential(Potential(Z, interaction_type_, basis.r_grid)),
     kinetic(basis.num_spl)
@@ -40,6 +44,7 @@ class Atom
 
         // Compute the kinetic term once, since we don't need to redo it each time.
         // Only need to fill the bottom half since DSYGV_ anticipates a guaranteed symmetric-definite matrix.
+        #pragma omp parallel for
         for(int i = 0; i < basis.num_spl; ++i)
         {
             for(int j = 0; j <= i; ++j)

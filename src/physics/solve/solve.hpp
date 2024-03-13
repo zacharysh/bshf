@@ -19,15 +19,16 @@
 
 auto construct_hamiltonian(const Atom &atom, const int l_state) -> SquareMatrix<double>;
 
-auto solve_schrodinger_state(Atom &atom, const int n_state, const int l_state) -> Electron;
+auto schrodinger(Atom &atom, const int l_number) -> void;
+auto solve_schrodinger_state(const Atom &atom, const int n_state, const int l_state) -> Electron;
 
-auto solve_schrodinger(Atom &atom, const int l_number) -> void;
 
-auto solve_atom(Atom &atom, const int l_max = 0) -> void;
+auto greens_perturbation(const Atom &atom, Electron &psi) -> void;
+
+auto generate_atom(Atom &atom, bool compute_perturbation = true) -> void;
 
 auto solve_excited_valence(Atom &atom, const int n, const int l) -> void;
 
-auto greens_perturbation(const Atom &atom, Electron &psi) -> void;
 
 
 #endif

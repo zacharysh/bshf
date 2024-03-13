@@ -21,8 +21,8 @@ class SplineBasis
     //typedef std::vector<std::vector<double> > vector_set;
     
     private:
+    auto construct_spline_vectors(double h) -> void;
     auto construct_matrix() -> void;
-    auto construct_spline_vectors() -> void;
 
     public:
     int num_spl;
@@ -36,7 +36,7 @@ class SplineBasis
     SquareMatrix<double> Bmatrix;
 
     SplineBasis(): num_spl(), k_spline(), r_grid(), bspl(), bspl_derivative(), Bmatrix() {};
-    SplineBasis(const LinearGrid &grid_, int k_spline, int n_spline);
+    SplineBasis(const LinearGrid &grid_, int k_spline_, int n_spline_, double machine_eps_);
 
     auto grid_size() const -> std::size_t { return r_grid.grid_size; }
 };

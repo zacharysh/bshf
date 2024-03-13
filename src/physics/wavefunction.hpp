@@ -31,7 +31,6 @@ class Electron
     bool has_correction {false};
     double energy_correction {0.0};
     
-    std::vector<double> coeffs;
     std::size_t basis_size;
 
     std::vector<double> P;

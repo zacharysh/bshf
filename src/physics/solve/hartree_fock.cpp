@@ -4,7 +4,7 @@
 namespace HartreeFock
 {
 
-auto construct_hamiltonian(const Atom &atom, const int l_state, const int n_max) -> SquareMatrix<double>
+auto construct_hamiltonian(const Atom &atom, const int l_state) -> SquareMatrix<double>
 {
     IO::log_params(LogType::info, "Hamiltonian matrix with exchange term", {{"l", l_state}});
 
@@ -17,6 +17,7 @@ auto construct_hamiltonian(const Atom &atom, const int l_state, const int n_max)
     auto lambda2 = (l_state == 0) ? -1.0 : -1.0/3.0;
 
     // We only fill the bottom half since dsygv_ anticipates a symmetric-definite matrix.
+    #pragma omp parallel for
     for(int i = 0; i < atom.basis.num_spl; ++i)
     {
         // Since H is Hermitian, we can save significant time by computing the action of V_ex b_i N times instead of V_ex b_j N^2 times.
@@ -33,28 +34,10 @@ auto construct_hamiltonian(const Atom &atom, const int l_state, const int n_max)
     return SquareMatrix<double>(H);
 }
 
-
-// Requires states to be done already.
-auto solve_full_schrodinger(Atom &atom) -> void
-{    
-    for(Electron &psi : atom.electrons)
-    {
-        IO::log_params(LogType::info, "Solving radial equation", {{"l", psi.l}}, 1);
-        auto Hamiltonian = construct_hamiltonian(atom, psi.l, psi.n);//atom.valence().l);
-        auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(Hamiltonian, atom.basis.Bmatrix);
-
-        psi = Electron(psi.n, psi.l, energies.at(psi.n - psi.l - 1), eigenvectors.get_row(psi.n - psi.l - 1), atom.basis);
-        IO::done(-1);
-    }
-}
-
 auto solve_full_schrodinger_state(const Atom &atom, int n, int l) -> Electron
 {
     IO::log_params(LogType::info, "Solving radial equation", {{"n", n}, {"l", l}}, 1);
-
-    auto Hamiltonian = construct_hamiltonian(atom, l, n);//atom.valence().l);
-    auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(Hamiltonian, atom.basis.Bmatrix);
-
+    auto [eigenvectors, energies] = MatrixTools::solve_eigen_system(std::move(HartreeFock::construct_hamiltonian(atom, l)), atom.basis.Bmatrix);
     IO::done(-1);
     return Electron(n, l, energies.at(n - l - 1), eigenvectors.get_row(n - l - 1), atom.basis);
 }
@@ -84,44 +67,33 @@ auto hartree_procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
         IO::verbose = false;
 
         if(full_hamiltonian)
-        {
             atom.core() = solve_full_schrodinger_state(atom, 1, 0);
-        }
         else
-        {
             atom.core() = solve_schrodinger_state(atom, 1, 0);
-        }
 
-        // Unnecessary copying, but I think makes the algorithm easier to read.
+        // Store new core energy and compute its rel. change.
         auto prev_core_energy = core_energies.back();
         core_energies.push_back(atom.core().energy);
-
         rel_energy_diff = abs(abs(core_energies.back()) - abs(prev_core_energy)) / abs(prev_core_energy);
 
-        ++iteration;
-
-        
         // We can be noisy again (if we want).
         IO::verbose = initial_verbosity;
-
         IO::done();
 
-        // Don't want to overflow.
-        if(iteration >= 20)
-            core_energies.reserve(core_energies.size() + sizeof(double));
+        ++iteration;
     }
     
 
     return core_energies;
 }
 
-auto solve_self_consistent(Atom &atom) -> void
+auto self_consistent(Atom &atom) -> void
 {
-    IO::log("Solving atom with mean-field Hartree approximation", 1);
+    IO::log("Solving atom with mean-field Hartree model", 1);
     
     // First, solve Schrodinger equation with Greens.
     atom.interaction_potential = {atom.Z, Potential::Type::Greens, atom.basis.r_grid};
-    solve_atom(atom);
+    generate_atom(atom, false);
 
     std::vector<double> initial_energies(atom.get_energies());
 
@@ -129,12 +101,12 @@ auto solve_self_consistent(Atom &atom) -> void
     atom.interaction_potential.type = Potential::Type::HF_Direct;
 
     // Compute Hartree convergence algorithm.
-    auto core_energy_timeseries = hartree_procedure(atom, false);
+    auto core_energy_time_series = hartree_procedure(atom, false);
 
     atom.electrons = {};
 
     // Finally, solve the full atom with the new direct potential.
-    solve_atom(atom);
+    generate_atom(atom, false);
 
     IO::done(-1);
 }
@@ -143,15 +115,21 @@ auto solve(Atom &atom) -> void
 {
     IO::log("Solving atom with Hartree-Fock method", 1);
     
+    bool compute_full_HF = (atom.interaction_potential.type == Potential::Type::HartreeFock);
+
     // Start with self-consistent solution.
-    solve_self_consistent(atom);
-    std::vector<double> initial_energies(atom.get_energies());
+    self_consistent(atom);
+
+    if( compute_full_HF == false)
+        return;
 
     // Compute Hartree-Fock convergence algorithm.
+    std::vector<double> initial_energies(atom.get_energies());
     auto core_energy_timeseries = hartree_procedure(atom, true);
 
-    solve_full_schrodinger(atom);
-
+    for(Electron &psi : atom.electrons)
+        psi = solve_full_schrodinger_state(atom, psi.n, psi.l);
+    
     atom.interaction_potential.type = Potential::Type::HartreeFock;
 
     IO::done(-1);

@@ -10,14 +10,13 @@
 #include "../math/basis/grid.hpp"
 
 class Potential
-{   
+{
     public:
     enum class Type
     {
         Coulomb,
         Greens,
         HF_Direct,
-        HF_Exchange,
         HartreeFock,
         Unknown
     };

@@ -109,7 +109,7 @@ auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double
     //double *work = new double[lwork];
     std::vector<double> work(6 * N);
     
-    std::vector<double> eigenvalues(A.get_size());
+    std::vector<double> eigenvalues(N);
 
     dsygv_(&itype, &jobz, &uplo, &N, A.data(), &N , B.data(), &N, eigenvalues.data(), work.data(), &lwork , &info);
     

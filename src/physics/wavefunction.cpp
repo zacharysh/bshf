@@ -4,7 +4,6 @@ Electron::Electron(const int n_, const int l_, const double energy_, const std::
 : n(n_), l(l_),
 state_label(std::to_string(n)),
 energy(energy_),
-coeffs(coeffs_),
 basis_size(coeffs_.size()),
 P(std::vector<double>(basis_.grid_size())),
 amplitude(std::vector<double>(basis_.grid_size()))
@@ -17,9 +16,9 @@ amplitude(std::vector<double>(basis_.grid_size()))
         
     IO::log(LogType::info, "Constructing electron state", state_label);
 
-    // Multiply the basis vectors by the correct weighting.
+    // Multiply the basis vectors by the expansion coefficients.
     // Removes need for multiple for-loops.
-    P = std::inner_product(basis_.bspl.begin(), basis_.bspl.end(), coeffs.begin(), P,
+    P = std::inner_product(basis_.bspl.begin(), basis_.bspl.end(), coeffs_.begin(), P,
         [] (auto a, auto b) {return a + b;}, [] (auto &b, auto &c) {return b * c;});
 
     amplitude = P * basis_.r_grid.range_inv;
