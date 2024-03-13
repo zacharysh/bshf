@@ -25,6 +25,7 @@ auto simpson_linear(double dr, const std::vector<double> &func) -> double
     return double(result * dr / 3.0);
 }
 
+
 auto ykab(const int k, const std::vector<double> &Pa,  const std::vector<double> &Pb, const LinearGrid &r_grid) -> std::vector<double>
 {
     const auto N = r_grid.grid_size;
@@ -62,7 +63,7 @@ auto operator*(const std::vector<double> &lhs, const double &rhs) -> std::vector
     std::vector<double> result {lhs};
 
     std::transform(result.begin(), result.end(), result.begin(),
-        [rhs] (auto x) { return (x * rhs); });
+        [rhs] (auto x) { return x * rhs; });
     return std::vector<double>(result);
 }
 

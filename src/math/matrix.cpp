@@ -92,67 +92,36 @@ auto Matrix<T>::get_row(std::size_t row) -> std::vector<T>
     return result;
 }
 
-
 // uses LAPACK function DYSGV
 // solves problems of the form Av = eBv.
 auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> B) -> std::pair<SquareMatrix<double>, std::vector<double> >
 {
     IO::log("Calling LAPACK subroutine DYSGV");
-    
-    int  itype { 1 };
-    char jobz  {'V'};
-    char uplo  {'U'};
 
-    int N = static_cast<int>(A.get_size());
+    int N = static_cast<int>(A.get_size()); // LAPACK anticipates integer type.
+    int  itype { 1 }; // generalised eigenvalue problem.
+    char jobz  {'V'}; // return eigenvectors.
+    char uplo  {'U'}; // upper-triangular (actually lower-triangular for C++).
+    int info = 0;     // Error code: info = 0 if successful.
 
-    std::vector<double> eigenvalues(A.get_size());
-
-    // blank array work of length lwork - memory used by LAPACK. We use the recommended value of lwork.
+    // Memory used by LAPACK. lwork = 6N is the recommended value.
     int lwork = 6 * N;
     //double *work = new double[lwork];
-    std::vector<double> work(6 * A.get_size());
-
-    // error code. info = 0 if successful.
-    int info = 0;
+    std::vector<double> work(6 * N);
+    
+    std::vector<double> eigenvalues(A.get_size());
 
     dsygv_(&itype, &jobz, &uplo, &N, A.data(), &N , B.data(), &N, eigenvalues.data(), work.data(), &lwork , &info);
+    
+    //delete [] work;
 
-    // Best way to do this?
     if (info != 0)
     {
         IO::log_params(LogType::error, "Error: dysgv_ failed", {{"INFO", info}});
     }
     else
-    {
         IO::done();
-    }
-
-    //delete [] work;
+    
 
     return {A, eigenvalues};
 }
-
-/*
-auto inline MatrixTools::innerProduct(double dr, std::vector<double> bra, std::vector<double> ket) -> double
-{
-    return trapz_linear(r_grid, bra * ket);
-}
-
-
-auto computeMatrixElements(std::vector<double> r_grid, std::vector<std::vector<double>> bra, std::vector<std::vector<double>> ket)
--> SquareMatrix<double>*
-{
-    // not sure if this is best way to do it...
-    size_t N = bra.size();
-    SquareMatrix<double> *matrix = new SquareMatrix<double>(N);
-
-    for(int i = 0; i < N; ++i)
-    {
-        for(int j = 0; j <= i; ++j)
-        {
-            (*matrix)(i, j) = integrate_trap(r_grid, bra.at(i) * ket.at(j));
-        }
-    }
-    return matrix;
-}
-*/

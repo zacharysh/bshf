@@ -6,6 +6,7 @@
 #include <cassert> // assert
 #include <vector>
 //#include <utility> // pair ?
+#include <memory> // std::unique_ptr
 
 #include "math_other.hpp"
 
@@ -82,10 +83,6 @@ namespace MatrixTools
 {
     auto solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> B) -> std::pair<SquareMatrix<double>, std::vector<double> >;
 
-    //auto inline innerProduct(double dr, std::vector<double> bra, std::vector<double> ket) -> double;
-
-    //auto computeMatrixElements(std::vector<double> r_grid, std::vector<std::vector<double>> bra, std::vector<std::vector<double>> ket)
-    //-> SquareMatrix<double>*;
 }; // namespace MatrixTools
 
 #endif

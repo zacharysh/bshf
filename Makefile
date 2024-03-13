@@ -12,8 +12,8 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 LDFLAGS= -llapack -lblas
 #  -fopenmp
 
-CC=g++ -march=native #g++-13
-CPPFLAGS= -std=c++17 -O3 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion
+CC=g++ #-march=native #g++-13
+CPPFLAGS= -std=c++17 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion -O2
 # -Wshadow -Wsign-conversion
 
 

@@ -14,6 +14,8 @@
 #include "../wavefunction.hpp"
 #include "../potential.hpp"
 
+#include "./hartree_fock.hpp"
+
 
 auto construct_hamiltonian(const Atom &atom, const int l_state) -> SquareMatrix<double>;
 

@@ -32,7 +32,7 @@ class LinearGrid
 
         std::generate(range.begin(), range.end(),
             [n=0, *this] () mutable
-                { return ((n++) * dr + r0); });
+                { return std::fma(n++,  dr, r0); });
         
 
         std::transform(range.begin(), range.end(), range_inv.begin(),

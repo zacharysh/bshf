@@ -4,6 +4,7 @@ Electron::Electron(const int n_, const int l_, const double energy_, const std::
 : n(n_), l(l_),
 state_label(std::to_string(n)),
 energy(energy_),
+coeffs(coeffs_),
 basis_size(coeffs_.size()),
 P(std::vector<double>(basis_.grid_size())),
 amplitude(std::vector<double>(basis_.grid_size()))
@@ -18,7 +19,7 @@ amplitude(std::vector<double>(basis_.grid_size()))
 
     // Multiply the basis vectors by the correct weighting.
     // Removes need for multiple for-loops.
-    P = std::inner_product(basis_.bspl.begin(), basis_.bspl.end(), coeffs_.begin(), P,
+    P = std::inner_product(basis_.bspl.begin(), basis_.bspl.end(), coeffs.begin(), P,
         [] (auto a, auto b) {return a + b;}, [] (auto &b, auto &c) {return b * c;});
 
     amplitude = P * basis_.r_grid.range_inv;
@@ -44,13 +45,13 @@ auto Electron::calculate_radial_moment(const LinearGrid &r_grid, int k) const ->
 auto calculate_lifetime(const Electron &a, const Electron &b, const LinearGrid &r_grid) -> double
 {   
     // Use experimental omega.
-    constexpr auto omega_3 = 0.06791 * 0.06791 * 0.06791;
+    const auto omega3 = 0.06791 * 0.06791 * 0.06791;
 
     assert((a.l == 0 && b.l == 1 && a.n == 2 && b.n == 2) && "Only works for 2p -> 2s transition currently.");
 
-    auto Rab = simpson_linear(r_grid.dr, a.P * r_grid.range * b.P);
+    auto Rab = simpson_linear(r_grid.dr, a.P * b.P * r_grid.range);
 
-    auto gamma = 2.0 * Rab * Rab * omega_3 / 3.0 * 1.071e10;
+    auto gamma = 2.0 * 1.071e10 * Rab * Rab * omega3 / 3.0;
 
     return 1/gamma;
 }

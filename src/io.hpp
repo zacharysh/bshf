@@ -5,6 +5,9 @@
 #include <sstream> // std::string
 #include <iostream> // std::cout
 
+#include <vector>
+#include <fstream>
+
 #define RED     "\033[0;31m"
 #define GREEN   "\033[0;32m"
 #define YELLOW  "\033[0;33m"
@@ -23,7 +26,9 @@ enum class LogType
 namespace IO
 {
     inline int  depth    = 0;
-    inline bool verbose  = true;
+    inline bool verbose  = true;//false;
+
+    inline bool print_results = true;//false;
 
     inline
     auto log(const std::string &msg, int delta_depth = 0) -> void
@@ -166,6 +171,9 @@ namespace IO
         if(delta_depth < 0) log(LogType::done, "Done", delta_depth);
         else                log(LogType::done, "done", delta_depth);
     }
-};
 
+auto print_to_file(std::string file_name, std::vector<std::pair<std::string, std::vector<double>>> &values) -> void;
+
+
+}; // namespace IO
 #endif

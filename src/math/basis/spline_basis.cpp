@@ -23,7 +23,11 @@ auto SplineBasis::construct_spline_vectors() -> void
     
     BSpline splines(k_spline, num_spl + 3, r_grid.r0, r_grid.r_max);
 
-    const auto h = sqrt(std::numeric_limits<double>::epsilon());
+    const auto h = std::cbrt(std::numeric_limits<double>::epsilon());
+    //const int radix =  std::numeric_limits<double>::radix;
+    //const int mantissa = std::numeric_limits<double>::digits;
+    //const double h = pow(1.0/radix, mantissa/3);
+
 
     for (auto n = 2; n < num_spl + 2; ++n)
     {
@@ -31,9 +35,10 @@ auto SplineBasis::construct_spline_vectors() -> void
                 [splines, n] (auto r) { return splines.b(n, r); });
 
         std::transform(r_grid.range.begin(), r_grid.range.end(), bspl_derivative.at(n - 2).begin(),
-                [h, splines, n] (auto r) { return (splines.b(n, r + h) - splines.b(n, r - h)) / ((r + h) - (r - h)); });
+                [h, splines, n] (auto r) { return (splines.b(n, r + h) - splines.b(n, r - h)) / (2*h); });
+                //[h, splines, n] (auto r) { return (splines.b(n, r + h) - splines.b(n, r - h)) / ((r+h)-(r-h)); });
+                //[h, splines, n] (auto r) { return (splines.b(n, r + h * r) - splines.b(n, r - h * r)) / ((r + h * r) - (r - h * r)); });
     }
-    
 
     IO::done();
 }

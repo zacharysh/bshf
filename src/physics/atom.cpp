@@ -1,7 +1,6 @@
 #include "atom.hpp"
 
 // Is there a better way to do this?
-inline
 auto print_state_label(const Electron &psi, bool excited_state_present) -> void
 {
     auto label = psi.state_label;
@@ -29,8 +28,8 @@ auto print_state_label(const Electron &psi, bool excited_state_present) -> void
 auto Atom::print_states() const -> void
 {
     // Perhaps we wish to include the normalisation?
-    //\u222Bdr|P(r)|\u00B2
-
+    
+    const std::string integral("\u222Bdr|P(r)|\u00B2");
     const std::string epsilon("\u03B5");
     const std::string delta("\u0394");
 
@@ -51,7 +50,7 @@ auto Atom::print_states() const -> void
         printf(" %16s %16s", (epsilon + "+" + delta + epsilon + " (au)").c_str(), (epsilon + "+" + delta + epsilon + " (eV)").c_str());
     }
 
-    printf(" %13s  %13s", "<r> (a0)", "<r\u00B2> (a0)");
+    printf(" %13s  %13s %17s", "<r> (a0)", "<r\u00B2> (a0)", integral.c_str());
     std::cout << "\n";
 
     bool excited_state_present = false;
@@ -60,7 +59,6 @@ auto Atom::print_states() const -> void
     {
         if(psi.filled == false)
             excited_state_present = true;
-            
         // First, print the state label.
         print_state_label(psi, excited_state_present);
         
@@ -74,7 +72,7 @@ auto Atom::print_states() const -> void
         }
 
         // Print radial moments
-        printf(" %13.5f %13.5f\n", psi.calculate_radial_moment(basis.r_grid, 1), psi.calculate_radial_moment(basis.r_grid, 2));
+        printf(" %13.5f %13.5f %13.5f\n", psi.calculate_radial_moment(basis.r_grid, 1), psi.calculate_radial_moment(basis.r_grid, 2), simpson_linear(basis.r_grid.dr, psi.P * psi.P));
     }
     std::cout   << (excited_state_present ? "\nKey: '\033[0;96m*\033[0;0m' indicates excited state; '\033[0;33m-\033[0;0m' indicates unfilled state."  : "")
                 << (print_perturbation ? ("\nN.B. " + epsilon + " is the unperturbed energy V = V_c + V_Gr. " + delta + epsilon + " is the first-order perturbative correction.") : "")

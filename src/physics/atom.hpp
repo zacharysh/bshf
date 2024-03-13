@@ -19,6 +19,9 @@ class Atom
     public:
     int Z;
 
+    int n_max;
+    int l_max;
+
     SplineBasis basis;
     Potential nuclear_potential;
     Potential interaction_potential;
@@ -27,8 +30,8 @@ class Atom
 
     std::vector<Electron> electrons {};
 
-    Atom(int Z_, Potential::Type nuclear_potential_type_, Potential::Type interaction_type_, const SplineBasis &basis_)
-    : Z(Z_), basis(basis_),
+    Atom(int Z_, int n_max_, int l_max_, Potential::Type nuclear_potential_type_, Potential::Type interaction_type_, const SplineBasis &basis_)
+    : Z(Z_), n_max(n_max_), l_max(l_max_), basis(basis_),
     nuclear_potential(Potential(Z, nuclear_potential_type_, basis.r_grid)),
     interaction_potential(Potential(Z, interaction_type_, basis.r_grid)),
     kinetic(basis.num_spl)
@@ -36,8 +39,7 @@ class Atom
         IO::log_params(LogType::info, "Constructing atom", {{"Z", Z_}}, 1);
 
         // Compute the kinetic term once, since we don't need to redo it each time.
-
-        // We only fill the bottom half since DSYGV_ anticipates a guaranteed symmetric-definite matrix.
+        // Only need to fill the bottom half since DSYGV_ anticipates a guaranteed symmetric-definite matrix.
         for(int i = 0; i < basis.num_spl; ++i)
         {
             for(int j = 0; j <= i; ++j)
@@ -45,7 +47,6 @@ class Atom
                 kinetic(i, j) = 0.5 * simpson_linear(basis.r_grid.dr, basis.bspl_derivative.at(i) * basis.bspl_derivative.at(j));
             }
         }
-
     }
     
     auto get_energies() -> std::vector<double>
@@ -69,7 +70,6 @@ class Atom
     auto get_range_inv() const -> const std::vector<double>& { return basis.r_grid.range_inv; }
 
     auto print_states() const -> void;
-
 }; // class Atom
 
 
