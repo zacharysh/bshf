@@ -1,4 +1,4 @@
-TARGET_EXEC := schrodingerHF
+TARGET_EXEC := bshf
 
 SRC_DIR  = ./src
 BUILD_DIR= ./build
@@ -9,10 +9,9 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 INC_DIRS := $(shell find $(SRC_DIR) -type d) 
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-LDFLAGS= -llapack -lblas
-
-CC=g++ -march=native -fopenmp
+CC=g++ -march=native
 CPPFLAGS= -std=c++17 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion -O3
+LDFLAGS= -llapack -lblas -fopenmp
 
 # The final build step.
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)

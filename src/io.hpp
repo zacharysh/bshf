@@ -32,7 +32,7 @@ inline bool verbose  = true;
 inline bool print_results = false;
 
 inline
-auto log(const std::string &msg, int delta_depth = 0) -> void
+auto log(const std::string_view msg, int delta_depth = 0) -> void
 {
     if(!verbose)
         return;
@@ -52,7 +52,7 @@ auto log(const std::string &msg, int delta_depth = 0) -> void
 }
 
 inline
-auto log(LogType msg_type, const std::string &msg, int delta_depth = 0) -> void
+auto log(LogType msg_type, const std::string_view msg, int delta_depth = 0) -> void
 {
     if(!verbose)
         return;
@@ -88,7 +88,7 @@ auto log(LogType msg_type, const std::string &msg, int delta_depth = 0) -> void
 }
 
 inline
-auto log(LogType msg_type, const std::string &msg, const std::string &info, int delta_depth = 0) -> void
+auto log(LogType msg_type, const std::string_view msg, const std::string_view info, int delta_depth = 0) -> void
 {
     if(!verbose)
         return;
@@ -113,7 +113,7 @@ auto log(LogType msg_type, const std::string &msg, const std::string &info, int 
     switch(msg_type)
     {
         default: break;
-        case LogType::info:  { std::cout  << BLUE   << " (" << info << ")." << CLEAR;   break;};
+        case LogType::info:  { std::cout  << BLUE   << " (" << info << ")" << CLEAR;   break;};
         case LogType::warn:  { std::cout  << YELLOW << " (" << info << ")." << CLEAR;   break;};
         case LogType::error: { std::cout  << RED    << " (" << info << ")." << CLEAR;   break;};
     }
@@ -132,7 +132,7 @@ auto log(LogType msg_type, const std::string &msg, const std::string &info, int 
 
 template <typename T = int>
 inline
-auto log_params(LogType msg_type, std::string msg, const std::initializer_list<T> &params, int delta_depth = 0) -> void
+auto log_params(LogType msg_type, const std::string_view msg, const std::initializer_list<T> &params, int delta_depth = 0) -> void
 {
     std::stringstream text {""};
 
@@ -151,7 +151,7 @@ auto log_params(LogType msg_type, std::string msg, const std::initializer_list<T
     
 template <typename T = int> 
 inline
-auto log_params(LogType msg_type, std::string msg, const std::initializer_list<std::pair<std::string, T> > &params, int delta_depth = 0) -> void
+auto log_params(LogType msg_type, const std::string_view msg, const std::initializer_list<std::pair<std::string, T> > &params, int delta_depth = 0) -> void
 {
     std::stringstream text {""};
 
