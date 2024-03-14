@@ -45,7 +45,6 @@ auto print_doc() -> void
 int main(int argc, char **argv)
 {
     auto t_start = std::chrono::high_resolution_clock::now();
-
     if (argc == 1)
     {
         print_doc();

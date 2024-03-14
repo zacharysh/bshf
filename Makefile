@@ -9,9 +9,9 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 INC_DIRS := $(shell find $(SRC_DIR) -type d) 
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CC=g++ -march=native
+CC=g++ -march=native -fopenmp
 CPPFLAGS= -std=c++17 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion -O3
-LDFLAGS= -llapack -lblas -fopenmp
+LDFLAGS= -llapack -lblas 
 
 # The final build step.
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
