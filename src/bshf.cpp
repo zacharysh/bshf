@@ -1,11 +1,7 @@
 #include <iostream>
-
 #include <vector>
-
 #include <cmath> // std::sqrt, std::cbrt
-
 #include <string> // std::string, std::stoi
-
 #include <chrono> // std::chrono::high_resolution_clock
 
 #include "io.hpp"

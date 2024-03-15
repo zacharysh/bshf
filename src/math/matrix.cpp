@@ -116,9 +116,7 @@ auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double
     //delete [] work;
 
     if (info != 0)
-    {
         IO::log_params(LogType::error, "Error: dysgv_ failed", {{"INFO", info}});
-    }
     else
         IO::done();
     

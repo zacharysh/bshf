@@ -75,11 +75,12 @@ auto Atom::print_states() const -> void
             printf(" %13.5f %13.5f", psi.energy + psi.energy_correction, PhysicalConstants::Eh_to_eV(psi.energy + psi.energy_correction));
         }
 
-        // Print radial moments
+        // Print radial moments.
         printf(" %13.5f %13.5f %13.5f\n", psi.calculate_radial_moment(basis.r_grid, 1), psi.calculate_radial_moment(basis.r_grid, 2), simpson_linear(basis.r_grid.dr, psi.P * psi.P));
     }
     for(auto i = 0; i < row_length; ++i)
         std::cout << "=";
+        
     std::cout   << (excited_state_present ? "\nKey: '\033[0;96m*\033[0;0m' indicates excited state; '\033[0;33m-\033[0;0m' indicates unfilled state."  : "")
                 << (print_perturbation ? ("\nN.B. " + epsilon + " is the unperturbed energy V = V_c + V_Gr. " + delta + epsilon + " is the first-order perturbative correction.") : "")
                 << "\n";

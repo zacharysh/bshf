@@ -82,7 +82,6 @@ class SquareMatrix : public Matrix<T>
 namespace MatrixTools
 {
     auto solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double> B) -> std::pair<SquareMatrix<double>, std::vector<double> >;
-
 }; // namespace MatrixTools
 
 #endif

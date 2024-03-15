@@ -75,7 +75,7 @@ auto operator*(const double &lhs, const std::vector<double> &rhs) -> std::vector
 
 auto operator+=(std::vector<double> &lhs, const std::vector<double> &rhs) -> std::vector<double>
 {
-    // use std::fma
+    // Should use std::fma...
     std::transform(lhs.begin(), lhs.end(), rhs.begin(), lhs.begin(),
         [] (auto x, auto y) { return x + y; });
 

@@ -15,8 +15,6 @@
 
 class Electron
 {
-    private:
-
     public:
     int n;
     int l;
@@ -36,8 +34,7 @@ class Electron
     std::vector<double> P;
     std::vector<double> amplitude;
     
-    Electron()
-    : n(), l(), state_label(), energy(), basis_size(), P(), amplitude() {};
+    Electron() : n(), l(), state_label(), energy(), basis_size(), P(), amplitude() {};
 
     Electron(const int n_, const int l_, const double energy_, const std::vector<double> &coeffs_, const SplineBasis &basis);
 
