@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 
+#include <iomanip> // std::setprecision
+
 #define RED     "\033[0;31m"
 #define GREEN   "\033[0;32m"
 #define YELLOW  "\033[0;33m"
@@ -171,7 +173,7 @@ namespace IO
         else                log(LogType::done, "done", delta_depth);
     }
 
-    auto print_to_file(std::string file_name, std::vector<std::pair<std::string, std::vector<double>>> &values) -> void;
+    auto print_to_file(std::string file_name, const std::vector<std::pair<std::string, std::vector<double>>> &values, int n_precision = 5) -> void;
 
 
 }; // namespace IO

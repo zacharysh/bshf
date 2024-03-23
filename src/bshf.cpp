@@ -11,31 +11,43 @@
 
 #include "physics/potential.hpp"
 #include "physics/atom.hpp"
-#include "physics/wavefunction.hpp"
 
 #include "physics/solve/solve.hpp"
 #include "physics/solve/hartree_fock.hpp"
 
-auto print_doc() -> void
-{
-    
-    std::cout 
-        << "Non-relativistic B-Spline Hartree-Fock atomic many-body solver.\n"
-        << "Last updated: " << __TIMESTAMP__ << ", compilation date: " << __DATE__ << ".\n"
-        << "Author: Zachary Stevens-Hough.\n"
-        << "Usage: 'bshf [options]'.\n"
-        << "Example:\n\t'bshf --Z 3 --n-max 10 --l-max 1' computes the first 10 s-wave and p-wave orbitals for hydrogen-like lithium.\n"
-        << "Options:\n";
+using std::size_t;
 
-        printf("%+30s:\n%+30s: print this message.\n", "--help", "-h");
-        printf("\n%+30s:\n%+30s: print values to disc (saves to './output/') (default: false).\n", "--print-to-disc", "-p");
-        printf("\n%+30s:\n%+30s: display verbose output (default: false).\n", "--verbose", "-v");
-        
-        printf("\n%+30s: set atomic number (default: Z = 3).\n", "--Z [Z]");
-        printf("%+30s: set maximum principle quantum number to solve (default: n_max = 2).\n", "--n-max [n_max]");
-        printf("%+30s: set maximum angular quantum number to solve (default: l_max = 1).\n", "--l-max [l_max]");
-        printf("\n%+30s:\n%+30s: set nuclear potential to 'pot', where 'pot' \u2208 {'coulomb'} (default: 'coulomb').\n", "--nuclear-potential [pot]", "-np [pot]");
-        printf("\n%+30s:\n%+30s: set interaction potential to 'pot', where 'pot' \u2208 {'greens', 'hartree', 'hartree-fock'} (default: '').\n", "--interaction-potential [pot]", "-ip [pot]");
+auto print_doc() -> void {
+
+  std::cout
+      << "Non-relativistic B-Spline Hartree-Fock atomic many-body solver.\n"
+      << "Last updated: " << __TIMESTAMP__ << ", compilation date: " << __DATE__
+      << ".\n"
+      << "Author: Zachary Stevens-Hough.\n"
+      << "Usage: 'bshf [options]'.\n"
+      << "Example:\n\t'bshf --Z 3 --n-max 10 --l-max 1' computes the first 10 "
+         "s-wave and p-wave orbitals for hydrogen-like lithium.\n"
+      << "Options:\n";
+
+  printf("  %-30s Display this message.\n", "--help, -h");
+  printf(
+      "  %-30s Print values to disc (saves to './output/') (default: false).\n",
+      "--print-to-disc, -p");
+  printf("  %-30s Display verbose output (default: false).\n", "--verbose, -v");
+
+  printf("  %-30s Set atomic number (default: Z = 3).\n", "--Z [Z]");
+  printf("  %-30s Set maximum principle quantum number to solve (default: "
+         "n_max = 2).\n",
+         "--n-max [n_max]");
+  printf("  %-30s Set maximum angular quantum number to solve (default: l_max "
+         "= 1).\n",
+         "--l-max [l_max]");
+  printf("  %-30s Set nuclear potential to 'pot', where 'pot' \u2208 "
+         "{'coulomb'} (default: 'coulomb').\n",
+         "--nuclear-potential [pot], -np [pot]");
+  printf("  %-30s Set interaction potential to 'pot', where 'pot' \u2208 "
+         "{'greens', 'hartree', 'hartree-fock'} (default: '').\n",
+         "--interaction-potential [pot], -ip [pot]");
 }
 
 int main(int argc, char **argv)
@@ -65,11 +77,11 @@ int main(int argc, char **argv)
 
     // Grid & basis parameters. Grid size is a variable for testing, but the others have been set to the `optimised' values.
     // Ideally, N_grid_size is odd for the purposes of *slightly* better Simpson integration.
-    std::size_t N_grid_size = 2501; 
+    std::size_t N_grid_size = 2501;
     constexpr auto r0 = 1.0e-6;
     constexpr auto rmax = 40.0;
     constexpr auto k_spline = 7;
-    constexpr auto n_spline = 65;
+    constexpr auto n_spline = 80;
     /************************************************************************************************************/
     
     // Parse input parameters.
@@ -92,7 +104,7 @@ int main(int argc, char **argv)
             io_verbosity = true;
             continue;
         }
-        if (param == "-p" || param == "--print-to-disc")
+        if (param == "-p" || param == "--print")
         {
             IO::print_results = true;
             continue;

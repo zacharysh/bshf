@@ -1,4 +1,4 @@
-#include "wavefunction.hpp"
+#include "electron.hpp"
 
 Electron::Electron(const int n_, const int l_, const double energy_, const std::vector<double> &coeffs_, const SplineBasis &basis_)
 : n(n_), l(l_),

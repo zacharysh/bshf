@@ -1,17 +1,14 @@
 #include "solve.hpp"
 
-
-auto construct_hamiltonian(const Atom &atom, const int l_state) -> SquareMatrix<double>
+auto construct_hamiltonian(const Atom &atom, const int l) -> SquareMatrix<double>
 {
-    IO::log_params(LogType::info, "Constructing Hamiltonian matrix", {{"l", l_state}});
+    IO::log_params(LogType::info, "Constructing Hamiltonian matrix", {{"l", l}});
+    SquareMatrix<double> H {atom.kinetic};
 
-    SquareMatrix<double> H = atom.kinetic;
+    // Electrostatic nuclear potential and interaction potential (if present) plus the centrifugal term.  
+    std::vector<double> potential {atom.nuclear_potential.values + atom.interaction_potential.values + 0.5 * l * (l + 1.0) * atom.get_range_inv() * atom.get_range_inv()};
 
-    // Electrostatic nuclear potential plus the centrifugal term.  
-    std::vector<double> potential =
-        atom.nuclear_potential.values + atom.interaction_potential.values + 0.5 * l_state * (l_state + 1.0) * atom.get_range_inv() * atom.get_range_inv();
-
-    // We only fill the bottom half since DSYGV_ anticipates a guaranteed symmetric-definite matrix.
+    // We only fill the bottom half since dsygv_ anticipates a guaranteed symmetric-definite matrix.
     #pragma omp parallel for
     for(int i = 0; i < atom.basis.num_spl; ++i)
         for(int j = 0; j <= i; ++j)

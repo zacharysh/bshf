@@ -1,6 +1,6 @@
 #include "io.hpp"
 
-auto IO::print_to_file(std::string file_name, std::vector<std::pair<std::string, std::vector<double>>> &values) -> void
+auto IO::print_to_file(std::string file_name, const std::vector<std::pair<std::string, std::vector<double>>> &values, int n_precision) -> void
 {
     if(print_results == false)
         return;
@@ -19,6 +19,8 @@ auto IO::print_to_file(std::string file_name, std::vector<std::pair<std::string,
             ofs << ", ";
     }
     ofs << "\n";
+
+    ofs << std::setprecision(n_precision);
 
     for(std::size_t i = 0; i < (values.begin())->second.size(); ++i)
     {

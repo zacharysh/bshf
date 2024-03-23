@@ -11,7 +11,7 @@
 #include "../math/basis/spline_basis.hpp"
 
 #include "potential.hpp"
-#include "wavefunction.hpp"
+#include "electron.hpp"
 
 
 class Atom
