@@ -1,4 +1,4 @@
-# bshf: Non-relativistic B-spline Hartree-Fock. (PHYS4070 Assignement 1)
+# bshf: Non-relativistic B-spline Hartree-Fock. (PHYS4070 Assignment 1)
 
 A program that solves the non-relativistic radial Schrödinger equation for atomic systems written in C++ for the first PHYS4070 assignment.
 
