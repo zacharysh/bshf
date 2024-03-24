@@ -10,8 +10,12 @@ INC_DIRS := $(shell find $(SRC_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CC=g++ -march=native -fopenmp
-CPPFLAGS= -std=c++17 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion -O3
-LDFLAGS= -llapack -lblas 
+LDFLAGS= -llapack -lblas
+
+# Dev flags.
+#CPPFLAGS= -std=c++17 -Werror -pedantic -Wextra -Wdouble-promotion -Wconversion -O3
+# Prod flags.
+CPPFLAGS= -std=c++17 -O3
 
 # The final build step.
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)

@@ -50,6 +50,7 @@ auto print_doc() -> void {
          "--interaction-potential [pot], -ip [pot]");
 }
 
+
 int main(int argc, char **argv)
 {
     auto t_start = std::chrono::high_resolution_clock::now();
@@ -82,6 +83,18 @@ int main(int argc, char **argv)
     constexpr auto rmax = 40.0;
     constexpr auto k_spline = 7;
     constexpr auto n_spline = 80;
+
+
+    // For the '--cdm-step' input argument. For testing purposes only!
+    // See defn of machine_eps for more info.
+    enum class CDMStepChoices
+    {
+        Default,
+        CubeRoot,
+        SquareRoot
+    };
+    auto cdm_step_choice = CDMStepChoices::Default;
+
     /************************************************************************************************************/
     
     // Parse input parameters.
@@ -150,6 +163,20 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
             }
         }
+        else if (param == "--cdm-step")
+        {
+            if(next_arg == "cbrt" || next_arg == "cube-root")
+                cdm_step_choice = CDMStepChoices::CubeRoot;
+            else if(next_arg == "sqrt" || next_arg == "square-root")
+                cdm_step_choice = CDMStepChoices::SquareRoot;
+            else if(next_arg == "default")
+                cdm_step_choice = CDMStepChoices::Default;
+            else
+            {
+                IO::log(LogType::error, "Unknown cdm step given.", "'" + next_arg + "'");
+                return EXIT_FAILURE;
+            }
+        }
     }
     
     if(N_grid_size == 2501) 
@@ -166,15 +193,24 @@ int main(int argc, char **argv)
     IO::verbose = io_verbosity;
     /************************************************************************************************************/
 
+    auto machine_eps = 0.0;
+    switch(cdm_step_choice)
+    {
+        case(CDMStepChoices::Default):
+        {
     // When solving Hartree-Fock method, we require higher precision near the origin for our 1s orbitals, so take cbrt so there is less
     // numerical error for r << 1 at the cost of decreased relative precision for r >> 1.
     // For other methods, we want a higher level of precision _everywhere_ (but r << 1 is less important),
     // so we should instead take the sqrt. 
-    const auto machine_eps = 
-        (interaction_type == Potential::Type::HartreeFock || interaction_type == Potential::Type::HF_Direct)
-        ? std::cbrt(std::numeric_limits<double>::epsilon()) : std::sqrt(std::numeric_limits<double>::epsilon());
+        machine_eps = 
+            (interaction_type == Potential::Type::HartreeFock || interaction_type == Potential::Type::HF_Direct)
+            ? std::cbrt(std::numeric_limits<double>::epsilon()) : std::sqrt(std::numeric_limits<double>::epsilon());
+            break;
+        }
+        case(CDMStepChoices::CubeRoot): { machine_eps = std::cbrt(std::numeric_limits<double>::epsilon()); break; }
+        case(CDMStepChoices::SquareRoot): { machine_eps = std::sqrt(std::numeric_limits<double>::epsilon()); break; }
+    }
 
-    
     // Initialise basis and atom and then solve the damned thing.
     /************************************************************************************************************/
     SplineBasis basis {LinearGrid {r0, rmax, N_grid_size}, k_spline, n_spline, machine_eps};

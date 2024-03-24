@@ -48,24 +48,26 @@ auto hartree_procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
     std::vector<double> core_energies;
     core_energies.reserve(20);
 
-    auto iteration = 0;
+    auto iter_count = 1;
     auto rel_energy_diff = 1.0; // Initialise?
 
     core_energies.push_back(atom.core().energy);
 
-    // To return to the initial verbosity, in case this is set to false initially.
+    // Store the initial verbosity flag to restore after completion of the procedure.
     auto initial_verbosity = IO::verbose;
 
     // Iterate until relative core energy change is negligible.
     while (rel_energy_diff >= 1e-6)
     {
-        IO::log_params(LogType::info, "Performing Hartree procedure", {{"iteration", iteration}});
+        IO::log_params(LogType::info, "Performing Hartree procedure", {{"iteration", iter_count}});
 
+        // Set the interaction potential in the system to the Hartree direct interaction.
         atom.interaction_potential.values = 2.0 * ykab(0, atom.core().P, atom.core().P, atom.basis.r_grid);
 
-        // Be quiet and save screen space.
+        // Turn off Hamiltonian/solver logging output.
         IO::verbose = false;
 
+        // Solve with the exchange term or not for Hartree-Fock or Hartree or, respectively.
         if(full_hamiltonian)
             atom.core() = solve_full_schrodinger_state(atom, 1, 0);
         else
@@ -80,10 +82,9 @@ auto hartree_procedure(Atom &atom, bool full_hamiltonian) -> std::vector<double>
         IO::verbose = initial_verbosity;
         IO::done();
 
-        ++iteration;
+        ++iter_count;
     }
     
-
     return core_energies;
 }
 
@@ -95,14 +96,13 @@ auto self_consistent(Atom &atom) -> void
     atom.interaction_potential = {atom.Z, Potential::Type::Greens, atom.basis.r_grid};
     generate_atom(atom, false);
 
-    std::vector<double> initial_energies(atom.get_energies());
-
     // Book-keeping
     atom.interaction_potential.type = Potential::Type::HF_Direct;
 
     // Compute Hartree convergence algorithm.
     auto core_energy_time_series = hartree_procedure(atom, false);
 
+    // Construct vector with the iteration number to use as the horizontal axis for plotting the energy time series.
     std::vector<double> it_count (core_energy_time_series.size());
     std::iota(it_count.begin(), it_count.end(), 0);
     IO::print_to_file("self_consistent_core_energies",  {{"iteration", it_count}, {"energy", core_energy_time_series}}, 15);
@@ -117,18 +117,17 @@ auto self_consistent(Atom &atom) -> void
 
 auto solve(Atom &atom) -> void
 {
-    IO::log("Solving atom with Hartree-Fock method", 1);
+    IO::log("Solving system with Hartree-Fock model", 1);
     
     bool compute_full_HF = (atom.interaction_potential.type == Potential::Type::HartreeFock);
 
     // Start with self-consistent solution.
     self_consistent(atom);
 
-    if( compute_full_HF == false)
+    if( compute_full_HF == false )
         return;
 
-    // Compute Hartree-Fock convergence algorithm.
-    std::vector<double> initial_energies(atom.get_energies());
+    // Run Hartree-Fock convergence algorithm.
     auto core_energy_time_series = hartree_procedure(atom, true);
 
     std::vector<double> it_count (core_energy_time_series.size());
