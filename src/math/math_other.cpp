@@ -15,13 +15,11 @@ auto trapz_linear(double dr, const std::vector<double> &func) -> double
 auto simpson_linear(double dr, const std::vector<double> &func) -> double
 {
     auto result = func.front() + func.back();
-    //auto result = func.back();
 
     for (std::size_t i = 1; i < func.size() - 1; ++i)
-    //for (std::size_t i = 1; i < func.size(); ++i)// we start at func.front() since our integral has to have lower bound at r=0.
     {
         auto w = (i % 2 == 0) ? 2.0 : 4.0;
-        result += func.at(i) * w; // we start at func.front() since our integral has to have lower bound at r=0.
+        result += func.at(i) * w;
     }
 
     return double(result * dr / 3.0);
