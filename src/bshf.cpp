@@ -270,7 +270,7 @@ int main(int argc, char **argv)
     /************************************************************************************************************/
     if(IO::print_results == true)
     {
-        std::cout << "\nPrinting results to disc.\n";
+        std::cout << "\nPrinting results to disc. Output directory=./output/.\n";
 
         // Temp. vector to store all electrons plus radial grid in a reusable format.
         std::vector<std::pair<std::string, std::vector<double> > > print_vector(1 + atom.electrons.size());
