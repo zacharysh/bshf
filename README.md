@@ -15,4 +15,4 @@ To build, run `make -j8` from the base directory.
 The compiled program can then be run by calling `./bshf [args]`.
 For documentation, use `./bshf --help`.
 
-This program is licensed under GPLv3 license.
+This program is licensed under GPLv3.
