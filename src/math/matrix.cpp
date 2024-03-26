@@ -106,20 +106,18 @@ auto MatrixTools::solve_eigen_system(SquareMatrix<double> A, SquareMatrix<double
 
     // Memory used by LAPACK. lwork = 6N is the recommended value.
     int lwork = 6 * N;
-    //double *work = new double[lwork];
-    std::vector<double> work(6 * N);
+    double *work = new double[lwork];
     
     std::vector<double> eigenvalues(N);
 
-    dsygv_(&itype, &jobz, &uplo, &N, A.data(), &N , B.data(), &N, eigenvalues.data(), work.data(), &lwork , &info);
+    dsygv_(&itype, &jobz, &uplo, &N, A.data(), &N , B.data(), &N, eigenvalues.data(), work, &lwork , &info);
     
-    //delete [] work;
+    delete [] work;
 
     if (info != 0)
         IO::log_params(LogType::error, "Error: dysgv_ failed", {{"INFO", info}});
     else
         IO::done();
-    
 
     return {A, eigenvalues};
 }
